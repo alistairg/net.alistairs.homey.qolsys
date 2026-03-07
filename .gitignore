@@ -1,0 +1,34 @@
+# Build output
+/.homeybuild/
+node_modules/
+
+# Secrets & keys
+PRIVATE_KEY_BACKUP.txt
+*.pem
+*.key
+test-config/
+
+# Logs
+output.log
+*.log
+
+# Debug/test scripts
+test-*.js
+test-*.py
+
+# Python venv
+pyvenv.cfg
+bin/
+lib/python*/
+include/
+__pycache__/
+
+# Reference implementations (cloned separately)
+QolsysController/
+ha-qolsys-panel/
+
+# OS
+.DS_Store
+
+# Generated (regenerate with `homey app build`)
+app.json

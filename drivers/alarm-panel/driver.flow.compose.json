@@ -1,0 +1,52 @@
+{
+  "triggers": [
+    {
+      "id": "alarm_triggered",
+      "title": {
+        "en": "Alarm triggered"
+      },
+      "tokens": [
+        {
+          "name": "partition_name",
+          "type": "string",
+          "title": {
+            "en": "Partition"
+          },
+          "example": {
+            "en": "Partition 1"
+          }
+        },
+        {
+          "name": "alarm_type",
+          "type": "string",
+          "title": {
+            "en": "Alarm Type"
+          },
+          "example": {
+            "en": "Police Emergency"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "arm_away",
+      "title": {
+        "en": "Arm away"
+      }
+    },
+    {
+      "id": "arm_home",
+      "title": {
+        "en": "Arm home (stay)"
+      }
+    },
+    {
+      "id": "disarm",
+      "title": {
+        "en": "Disarm"
+      }
+    }
+  ]
+}

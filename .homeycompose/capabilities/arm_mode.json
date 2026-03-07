@@ -1,0 +1,28 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Arm mode"
+  },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "values": [
+    {
+      "id": "disarmed",
+      "title": { "en": "Disarmed" }
+    },
+    {
+      "id": "arm_away",
+      "title": { "en": "Armed away" }
+    },
+    {
+      "id": "arm_stay",
+      "title": { "en": "Armed home" }
+    },
+    {
+      "id": "arm_night",
+      "title": { "en": "Armed night" }
+    }
+  ],
+  "icon": "/assets/capabilities/arm-mode.svg"
+}

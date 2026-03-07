@@ -1,0 +1,17 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Exit delay"
+  },
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Exit delay started"
+  },
+  "insightsTitleFalse": {
+    "en": "Exit delay ended"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/arming.svg"
+}

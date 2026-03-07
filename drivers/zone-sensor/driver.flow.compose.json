@@ -1,0 +1,10 @@
+{
+  "triggers": [
+    {
+      "id": "zone_tampered",
+      "title": {
+        "en": "Zone tampered"
+      }
+    }
+  ]
+}

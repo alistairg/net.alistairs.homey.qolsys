@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      color: #333;
+      text-align: center;
+    }
+    h2 { margin-top: 0; }
+    .spinner {
+      margin: 30px auto;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #eee;
+      border-top: 4px solid #1a1a2e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status {
+      font-size: 16px;
+      margin-top: 16px;
+    }
+    .error { color: #c00; margin-top: 8px; display: none; }
+    .success { color: #090; }
+  </style>
+</head>
+<body>
+  <h2>Pairing with Panel</h2>
+
+  <div class="spinner" id="spinner"></div>
+  <p class="status" id="status">Waiting for panel to connect...</p>
+  <p class="error" id="error"></p>
+
+  <script>
+    var statusEl = document.getElementById('status');
+    var spinnerEl = document.getElementById('spinner');
+    var errorEl = document.getElementById('error');
+
+    Homey.on('pairing_status', function(msg) {
+      statusEl.textContent = msg;
+    });
+
+    Homey.emit('start_pairing').then(function() {
+      Homey.showView('list_devices');
+    }).catch(function(err) {
+      spinnerEl.style.display = 'none';
+      errorEl.textContent = err.message || 'Pairing failed.';
+      errorEl.style.display = 'block';
+      statusEl.textContent = 'Pairing failed.';
+    });
+  </script>
+</body>
+</html>

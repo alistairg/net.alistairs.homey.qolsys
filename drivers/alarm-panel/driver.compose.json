@@ -1,0 +1,77 @@
+{
+  "name": {
+    "en": "Alarm Partition"
+  },
+  "class": "homealarm",
+  "capabilities": [
+    "homealarm_state",
+    "alarm_generic",
+    "alarm_tamper",
+    "arm_mode",
+    "alarm_arming",
+    "alarm_entry_delay",
+    "ready_to_arm"
+  ],
+  "capabilitiesOptions": {
+    "alarm_generic": {
+      "title": {
+        "en": "Alarm sounding"
+      }
+    },
+    "alarm_tamper": {
+      "title": {
+        "en": "Panel tamper"
+      }
+    }
+  },
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "pair": [
+    {
+      "id": "configure",
+      "navigation": {
+        "next": "pairing"
+      }
+    },
+    {
+      "id": "pairing",
+      "navigation": {
+        "prev": "configure"
+      }
+    },
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "settings": [
+    {
+      "id": "panel_ip",
+      "type": "text",
+      "label": {
+        "en": "Panel IP Address"
+      },
+      "hint": {
+        "en": "The IP address of your Qolsys IQ Panel"
+      }
+    },
+    {
+      "id": "partition_id",
+      "type": "label",
+      "label": {
+        "en": "Partition ID"
+      }
+    }
+  ]
+}

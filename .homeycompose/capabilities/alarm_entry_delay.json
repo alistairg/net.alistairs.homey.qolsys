@@ -1,0 +1,17 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Entry delay"
+  },
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Entry delay started"
+  },
+  "insightsTitleFalse": {
+    "en": "Entry delay ended"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/entry-delay.svg"
+}
