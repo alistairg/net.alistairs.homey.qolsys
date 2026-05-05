@@ -10,13 +10,6 @@ export default class QolsysApp extends Homey.App {
   async onInit(): Promise<void> {
     this.log('Qolsys IQ Panel app started');
     this._pkiManager = new PkiManager(this.homey);
-
-    // Log PKI backup so it can be saved locally
-    if (this._pkiManager.isPaired()) {
-      this.log('[PKI_BACKUP_START]');
-      this.log(this._pkiManager.exportBackup());
-      this.log('[PKI_BACKUP_END]');
-    }
   }
 
   getPkiManager(): PkiManager {
