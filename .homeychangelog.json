@@ -1,0 +1,5 @@
+{
+  "1.0.1": {
+    "en": "Reliability and security improvements: TLS validation re-enabled on the operational MQTT connection, reconnection backoff math fixed, idempotent client creation eliminates the multi-device boot race, zone sensors recover when alarm-panel hasn't initialised yet, alarm trigger debounced (no more spam during a sustained alarm), 3-second grace period before flapping the device offline, schema-versioned capability migration."
+  }
+}
