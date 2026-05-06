@@ -7,10 +7,17 @@ import {
   ZoneStatus,
 } from './types';
 
-// ContentProvider URI suffixes we care about
+// ContentProvider URI suffixes we care about. The actual panel URIs are
+// of the form `content://com.qolsys.qolsyssettings/qolsyssettings` etc.
+// We match by suffix so we don't depend on the specific authority prefix.
+// The settings entry was previously written as `QolsysSettingsProvider`
+// (without `Content` in the middle) — that happened to work as a substring
+// of `QolsysSettingsContentProvider`, but a future panel firmware change
+// could break it silently. Settled on the version that matches the
+// reference implementation.
 const URI_PARTITION = 'PartitionContentProvider/partition';
 const URI_SENSOR = 'SensorContentProvider/sensor';
-const URI_SETTINGS = 'QolsysSettingsProvider/qolsyssettings';
+const URI_SETTINGS = 'QolsysSettingsContentProvider/qolsyssettings';
 const URI_STATE = 'StateContentProvider/state';
 const URI_POWERG = 'PowerGDeviceContentProvider/powerg_device';
 

@@ -7,15 +7,21 @@ import {
   QolsysZoneData,
 } from '../../lib/types';
 import { isZoneActive } from '../../lib/ZoneTypes';
+import { stripPort } from '../../lib/NetUtil';
 
 import type QolsysApp from '../../app';
 import type AlarmPanelDriver from './driver';
 import type { QolsysPanelClient } from '../../lib/QolsysPanelClient';
 
+const SCHEMA_VERSION = 1;
+const DISCONNECT_GRACE_MS = 3000;
+
 export default class AlarmPanelDevice extends Homey.Device {
 
   private client: QolsysPanelClient | null = null;
   private partitionId: string = '';
+  private disconnectFlapTimer: NodeJS.Timeout | null = null;
+  private lastAlarmState: PartitionAlarmState | null = null;
 
   // Bound listeners for cleanup
   private _onConnected = () => this.handleConnected();
@@ -25,17 +31,12 @@ export default class AlarmPanelDevice extends Homey.Device {
   private _onZoneUpdate = () => this.updateReadyToArm();
 
   async onInit(): Promise<void> {
+    await super.onInit();
     this.log('Alarm Panel device initializing:', this.getName());
 
     this.partitionId = this.getData().partitionId;
 
-    // Migrate capabilities added after initial pairing
-    const requiredCaps = ['alarm_generic', 'alarm_tamper', 'arm_mode', 'alarm_arming', 'alarm_entry_delay', 'ready_to_arm'];
-    for (const cap of requiredCaps) {
-      if (!this.hasCapability(cap)) {
-        await this.addCapability(cap).catch((err) => this.log(`Failed to add ${cap}:`, err));
-      }
-    }
+    await this.migrateCapabilities();
 
     // Register capability listener for arm/disarm from Homey UI
     this.registerCapabilityListener('homealarm_state', async (value: string) => {
@@ -69,57 +70,92 @@ export default class AlarmPanelDevice extends Homey.Device {
       }
     });
 
-    // Bind to the shared MQTT client
-    this.bindClient();
+    // Bind to the shared MQTT client. Awaiting this means we don't return
+    // from onInit until listeners are attached, eliminating the window
+    // where panel events could fire before we're listening.
+    await this.bindClient();
   }
 
   async onUninit(): Promise<void> {
+    await super.onUninit();
     this.log('Alarm Panel device uninitializing:', this.getName());
+    if (this.disconnectFlapTimer) {
+      this.homey.clearTimeout(this.disconnectFlapTimer);
+      this.disconnectFlapTimer = null;
+    }
     this.unbindClient();
+  }
+
+  async onDeleted(): Promise<void> {
+    await super.onDeleted();
+    await this.onUninit();
+  }
+
+  /**
+   * Add capabilities that may be missing on devices paired before they
+   * existed. Schema-versioned so we don't redundantly probe every boot —
+   * once a device is at the current schema, no per-capability hasCapability
+   * calls run.
+   */
+  private async migrateCapabilities(): Promise<void> {
+    const stored = (this.getStoreValue('schema_version') as number | undefined) ?? 0;
+    if (stored >= SCHEMA_VERSION) return;
+
+    const requiredCaps = ['alarm_generic', 'alarm_tamper', 'arm_mode', 'alarm_arming', 'alarm_entry_delay', 'ready_to_arm'];
+    for (const cap of requiredCaps) {
+      if (!this.hasCapability(cap)) {
+        await this.addCapability(cap).catch((err) => this.log(`Failed to add ${cap}:`, err));
+      }
+    }
+    await this.setStoreValue('schema_version', SCHEMA_VERSION);
   }
 
   // ---------------------------------------------------------------------------
   // Client binding
   // ---------------------------------------------------------------------------
 
-  private bindClient(): void {
+  /**
+   * Acquire (or create) the shared MQTT client and attach our listeners.
+   * Async — listener attachment must complete before onInit returns,
+   * otherwise an arriving panel event could be silently dropped.
+   */
+  private async bindClient(): Promise<void> {
     const app = this.homey.app as QolsysApp;
     this.client = app.getClient();
 
     if (!this.client) {
-      // Create and connect client on boot
-      const panelIp = this.getStoreValue('panelIp') || this.getSetting('panel_ip');
+      // First device for this panel — create the singleton.
+      const panelIp = (this.getStoreValue('panelIp') as string | undefined)
+        || (this.getSetting('panel_ip') as string | undefined);
       if (!panelIp) {
         this.log('No panel IP stored — cannot connect');
         return;
       }
 
-      // Get fresh local IP (may change between boots with DHCP)
-      this.homey.cloud.getLocalAddress().then((localAddress) => {
-        const pluginIp = localAddress.replace(/:.*$/, '');
-        this.client = app.createClient(panelIp, pluginIp);
-        this.client.on('connected', this._onConnected);
-        this.client.on('disconnected', this._onDisconnected);
-        this.client.on('partition_update', this._onPartitionUpdate);
-        this.client.on('alarm_event', this._onAlarmEvent);
-        this.client.on('zone_update', this._onZoneUpdate);
-        this.client.connect().catch((err) => {
-          this.log('Failed to connect:', err);
-        });
-      }).catch((err) => {
+      let pluginIp: string;
+      try {
+        const localAddress = await this.homey.cloud.getLocalAddress();
+        pluginIp = stripPort(localAddress);
+      } catch (err) {
         this.log('Failed to get local address:', err);
-      });
-      return;
+        return;
+      }
+
+      this.client = app.createClient(panelIp, pluginIp);
     }
 
+    // Attach listeners synchronously now that we have the client.
     this.client.on('connected', this._onConnected);
     this.client.on('disconnected', this._onDisconnected);
     this.client.on('partition_update', this._onPartitionUpdate);
     this.client.on('alarm_event', this._onAlarmEvent);
     this.client.on('zone_update', this._onZoneUpdate);
 
-    // If already connected, sync state immediately
-    if (this.client.isConnected) {
+    // Kick off connect if not already in progress (createClient on a fresh
+    // singleton constructs but doesn't auto-connect).
+    if (!this.client.isConnected) {
+      this.client.connect().catch((err) => this.log('Failed to connect:', err));
+    } else {
       this.handleConnected();
     }
   }
@@ -140,6 +176,11 @@ export default class AlarmPanelDevice extends Homey.Device {
   // ---------------------------------------------------------------------------
 
   private handleConnected(): void {
+    // Cancel any pending disconnect-grace timer — we're back.
+    if (this.disconnectFlapTimer) {
+      this.homey.clearTimeout(this.disconnectFlapTimer);
+      this.disconnectFlapTimer = null;
+    }
     this.setAvailable().catch(this.error);
 
     // Sync current partition state
@@ -152,8 +193,18 @@ export default class AlarmPanelDevice extends Homey.Device {
     this.updatePanelTamper();
   }
 
+  /**
+   * Defer setUnavailable by a short grace window — the panel disconnects
+   * briefly during pairing handshakes and reconnect cycles, and flickering
+   * the device tile red on each blip is bad UX. If a connect arrives
+   * within the window, we cancel and stay green.
+   */
   private handleDisconnected(): void {
-    this.setUnavailable('Disconnected from panel').catch(this.error);
+    if (this.disconnectFlapTimer) return;
+    this.disconnectFlapTimer = this.homey.setTimeout(() => {
+      this.disconnectFlapTimer = null;
+      this.setUnavailable('Disconnected from panel').catch(this.error);
+    }, DISCONNECT_GRACE_MS);
   }
 
   private handlePartitionUpdate(event: { partitionId: string; data: QolsysPartitionData }): void {
@@ -161,8 +212,23 @@ export default class AlarmPanelDevice extends Homey.Device {
     this.syncPartitionState(event.data);
   }
 
+  /**
+   * Fire the alarm trigger only on the disarmed/idle → ALARM transition.
+   * The panel emits partition_update repeatedly while alarming (every
+   * dbChanged); previously we triggered the flow card on each, spamming
+   * any user notifications. Track the previous state and gate.
+   */
   private handleAlarmEvent(event: { partitionId: string; alarmState: string; alarmType: string }): void {
     if (event.partitionId !== this.partitionId) return;
+
+    const newState = event.alarmState as PartitionAlarmState;
+    const previousState = this.lastAlarmState;
+    this.lastAlarmState = newState;
+
+    // Only fire on the rising edge into ALARM. Continuing-alarm updates
+    // and exit-from-alarm are not user-facing trigger-worthy events.
+    if (newState !== PartitionAlarmState.ALARM) return;
+    if (previousState === PartitionAlarmState.ALARM) return;
 
     const driver = this.driver as AlarmPanelDriver;
     driver.triggerAlarm(this, {
@@ -225,9 +291,6 @@ export default class AlarmPanelDevice extends Homey.Device {
     const current = this.getCapabilityValue('homealarm_state');
     if (current !== homealarmState) {
       this.log(`Alarm state: ${current} → ${homealarmState} (panel: ${partition.systemStatus})`);
-      this.homey.notifications.createNotification({
-        excerpt: `Alarm ${homealarmState === 'armed' ? 'armed away' : homealarmState === 'partially_armed' ? 'armed home' : 'disarmed'}`,
-      }).catch(() => {});
     }
     this.setCapabilityValue('homealarm_state', homealarmState).catch(this.error);
     this.setCapabilityValue('arm_mode', armMode).catch(this.error);

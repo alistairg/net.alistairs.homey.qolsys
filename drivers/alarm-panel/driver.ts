@@ -1,6 +1,7 @@
 import Homey from 'homey';
 import { PkiManager } from '../../lib/PkiManager';
 import { PairingServer } from '../../lib/PairingServer';
+import { stripPort } from '../../lib/NetUtil';
 
 import type QolsysApp from '../../app';
 
@@ -79,7 +80,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
 
       // Get local IP for mDNS advertisement
       const localAddress = await this.homey.cloud.getLocalAddress();
-      const pluginIp = localAddress.replace(/:.*$/, ''); // strip port if present
+      const pluginIp = stripPort(localAddress);
 
       // Clean up any previous pairing server
       if (pairingServer) {
@@ -137,7 +138,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
 
       // Get local IP
       const localAddress = await this.homey.cloud.getLocalAddress();
-      const pluginIp = localAddress.replace(/:.*$/, '');
+      const pluginIp = stripPort(localAddress);
       this.log('list_devices: pluginIp:', pluginIp);
 
       // Connect to panel and sync database

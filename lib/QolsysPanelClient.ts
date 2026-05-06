@@ -111,7 +111,13 @@ export class QolsysPanelClient extends EventEmitter {
       key: tlsCerts.key,
       cert: tlsCerts.cert,
       ca: tlsCerts.ca,
-      rejectUnauthorized: false,
+      // Validate the server cert against the CA we received during pairing
+      // — that's the whole point of mutual TLS. The panel's cert CN is
+      // 'www.qolsys.com' (with a trailing space) and won't match the
+      // panel's LAN IP, so we override checkServerIdentity to skip the
+      // hostname check while keeping the chain validation.
+      rejectUnauthorized: true,
+      checkServerIdentity: () => undefined,
       secureContext,
       clientId,
       clean: true,
@@ -545,22 +551,21 @@ export class QolsysPanelClient extends EventEmitter {
     this.stopReconnectTimer();
     this.log(`Reconnecting in ${this.reconnectDelay / 1000}s...`);
 
+    // Exponential backoff happens once per failure, in the catch block
+    // below. The previous version doubled here AND in the catch, which
+    // grew the delay 4× per failure instead of 2×.
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
       try {
         await this.connect();
       } catch (err) {
         this.log('Reconnect failed:', err);
-        // Exponential backoff
         this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_MAX_MS);
         if (!this._destroyed) {
           this.scheduleReconnect();
         }
       }
     }, this.reconnectDelay);
-
-    // Exponential backoff for next attempt
-    this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_MAX_MS);
   }
 
   private stopReconnectTimer(): void {
