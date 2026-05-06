@@ -1,0 +1,23 @@
+{
+  "id": "net.alistairs.homey.qolsys",
+  "version": "1.0.1",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Qolsys IQ Panel"
+  },
+  "description": {
+    "en": "Integrates with Qolsys IQ Panel alarm systems via the IQ Remote protocol"
+  },
+  "category": [
+    "security"
+  ],
+  "permissions": [],
+  "author": {
+    "name": "Alistair Galbraith",
+    "email": "homey@alistairs.net"
+  }
+}

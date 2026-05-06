@@ -30,5 +30,7 @@ ha-qolsys-panel/
 # OS
 .DS_Store
 
-# Generated (regenerate with `homey app build`)
-app.json
+# Generated (regenerate with `homey app build`).
+# Use a leading slash so this matches only the root manifest, not the
+# .homeycompose/app.json source-of-truth which must be tracked.
+/app.json
