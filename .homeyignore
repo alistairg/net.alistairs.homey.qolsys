@@ -1,0 +1,25 @@
+# Files to exclude from `homey app install` / `homey app publish` packaging.
+# The Homey CLI bundles the working directory; these paths add bloat.
+
+# Python venv used by test-*.py scripts
+lib/python*/
+pyvenv.cfg
+bin/
+include/
+__pycache__/
+
+# Upstream reference implementations cloned for protocol cross-reference
+QolsysController/
+ha-qolsys-panel/
+
+# Dev-time test scripts
+test-*.js
+test-*.py
+test-config/
+
+# Captured logs
+*.log
+
+# Documentation
+CLAUDE.md
+claude.md
