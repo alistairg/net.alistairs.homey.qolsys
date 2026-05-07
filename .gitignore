@@ -30,7 +30,7 @@ ha-qolsys-panel/
 # OS
 .DS_Store
 
-# Generated (regenerate with `homey app build`).
-# Use a leading slash so this matches only the root manifest, not the
-# .homeycompose/app.json source-of-truth which must be tracked.
-/app.json
+# Note: app.json (the composed manifest) IS tracked. Both the Athom
+# validate and publish actions require it to exist as the entry point —
+# they don't auto-compose from .homeycompose/. Keep `app.json` and
+# `.homeycompose/app.json` in sync manually (or via `homey app build`).
