@@ -16,6 +16,11 @@
     "security"
   ],
   "permissions": [],
+  "images": {
+    "small":  "/assets/images/image_sm.jpg",
+    "large":  "/assets/images/image_lg.jpg",
+    "xlarge": "/assets/images/image_xl.jpg"
+  },
   "author": {
     "name": "Alistair Galbraith",
     "email": "homey@alistairs.net"
