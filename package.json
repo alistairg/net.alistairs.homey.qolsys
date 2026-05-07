@@ -1,6 +1,6 @@
 {
   "name": "net.alistairs.homey.qolsys",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
