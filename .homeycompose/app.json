@@ -15,6 +15,7 @@
   "category": [
     "security"
   ],
+  "brandColor": "#3A6286",
   "permissions": [],
   "images": {
     "small":  "/assets/images/image_sm.jpg",
@@ -22,8 +23,7 @@
     "xlarge": "/assets/images/image_xl.jpg"
   },
   "author": {
-    "name": "Alistair Galbraith",
-    "email": "homey@alistairs.net"
+    "name": "Alistair Galbraith"
   },
   "api": {
     "getBackup": { "method": "GET", "path": "/backup" },
