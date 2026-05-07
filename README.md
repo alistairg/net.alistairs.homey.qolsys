@@ -1,4 +1,4 @@
-# Qolsys IQ Panel for Homey
+# Qolsys IQ for Homey
 
 A Homey app that connects to a Qolsys IQ Panel (IQ Panel 2/2+, IQ Panel 4, IQ Pro) over the panel's built-in MQTT broker, so partitions and zones appear as Homey devices. The connection is local and uses mutual-TLS — no external broker, no cloud required.
 

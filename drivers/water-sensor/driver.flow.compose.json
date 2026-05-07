@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "water-sensor_tampered", "title": { "en": "Water sensor tampered" } }
+  ]
+}

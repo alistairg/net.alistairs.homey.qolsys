@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "smoke-detector_tampered", "title": { "en": "Smoke detector tampered" } }
+  ]
+}

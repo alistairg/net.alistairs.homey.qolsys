@@ -87,3 +87,64 @@ const EXCLUDED_SENSOR_TYPES: Set<string> = new Set([
 export function shouldIncludeZone(sensorType: string): boolean {
   return !EXCLUDED_SENSOR_TYPES.has(sensorType);
 }
+
+// ---------------------------------------------------------------------------
+// Per-driver type lists — each `drivers/<x>/driver.ts` references one of
+// these to filter the zone list during pairing. Listed here (rather than
+// inline in each driver) so the "what is generic" calculation can be
+// derived: if a type isn't claimed by any specific driver, generic-sensor
+// claims it.
+// ---------------------------------------------------------------------------
+
+export const ContactSensorTypes: readonly string[] = [
+  ZoneSensorType.DOOR_WINDOW,
+  ZoneSensorType.DOOR_WINDOW_M,
+  ZoneSensorType.TILT,
+];
+
+export const MotionSensorTypes: readonly string[] = [
+  ZoneSensorType.MOTION,
+  ZoneSensorType.PANEL_MOTION,
+  ZoneSensorType.OCCUPANCY,
+];
+
+export const SmokeDetectorTypes: readonly string[] = [
+  ZoneSensorType.SMOKE_DETECTOR,
+  ZoneSensorType.SMOKE_M,
+];
+
+export const CODetectorTypes: readonly string[] = [
+  ZoneSensorType.CO_DETECTOR,
+];
+
+export const WaterSensorTypes: readonly string[] = [
+  ZoneSensorType.WATER,
+];
+
+export const GlassBreakDetectorTypes: readonly string[] = [
+  ZoneSensorType.GLASS_BREAK,
+  ZoneSensorType.PANEL_GLASS_BREAK,
+];
+
+/**
+ * Sensor types Qolsys panels report but which don't yet have a Homey
+ * driver. When new specific drivers are added (e.g. heat-detector,
+ * freeze-sensor, doorbell), move the type out of this list and into the
+ * new driver's per-type list. Listed explicitly so the test suite
+ * forces a deliberate categorisation when a new ZoneSensorType is added
+ * to the enum — no silent fall-through to a catch-all driver.
+ */
+export const UnsupportedZoneTypes: readonly string[] = [
+  ZoneSensorType.AUXILIARY_PENDANT,
+  ZoneSensorType.DOORBELL,
+  ZoneSensorType.FREEZE,
+  ZoneSensorType.HEAT,
+  ZoneSensorType.HIGH_TEMPERATURE,
+  ZoneSensorType.KEY_FOB,
+  ZoneSensorType.SHOCK,
+  ZoneSensorType.SIREN,
+  ZoneSensorType.TAMPER,
+  ZoneSensorType.TEMPERATURE,
+  ZoneSensorType.TRANSLATOR,
+  ZoneSensorType.UNKNOWN,
+];

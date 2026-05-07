@@ -1,0 +1,61 @@
+{
+  "name": {
+    "en": "Motion Sensor"
+  },
+  "class": "sensor",
+  "capabilities": [
+    "alarm_motion",
+    "alarm_tamper",
+    "alarm_battery"
+  ],
+  "energy": {
+    "batteries": ["CR123A"]
+  },
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "images": {
+    "small":  "/drivers/motion-sensor/assets/images/image_s.jpg",
+    "large":  "/drivers/motion-sensor/assets/images/image_l.jpg",
+    "xlarge": "/drivers/motion-sensor/assets/images/image_xl.jpg"
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "settings": [
+    {
+      "id": "sensor_zone_id",
+      "type": "label",
+      "label": {
+        "en": "Zone ID"
+      }
+    },
+    {
+      "id": "sensor_type",
+      "type": "label",
+      "label": {
+        "en": "Sensor Type"
+      }
+    },
+    {
+      "id": "battery_type",
+      "type": "label",
+      "label": {
+        "en": "Battery Type"
+      }
+    }
+  ]
+}

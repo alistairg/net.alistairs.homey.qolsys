@@ -7,7 +7,7 @@
     "local"
   ],
   "name": {
-    "en": "Qolsys IQ Panel"
+    "en": "Qolsys IQ"
   },
   "description": {
     "en": "Integrates with Qolsys IQ Panel alarm systems via the IQ Remote protocol"

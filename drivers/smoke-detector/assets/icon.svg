@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960px" height="960px" viewBox="0 0 960 960" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>driver/smoke/icon</title>
+    <g id="driver/smoke/icon" stroke="none" fill="none">
+        <circle id="Oval" stroke="#000000" stroke-width="30" cx="469" cy="488" r="425"></circle>
+        <circle id="Oval" stroke="#000000" stroke-width="15" cx="469.5" cy="488.5" r="292"></circle>
+        <circle id="Oval" stroke="#000000" stroke-width="15" cx="470" cy="488" r="159.5"></circle>
+        <line x1="439.5" y1="654.5" x2="401.5" y2="763.5" id="Line" stroke="#000000" stroke-width="10" stroke-linecap="square"></line>
+        <line x1="549" y1="654" x2="511" y2="763" id="Line" stroke="#000000" stroke-width="10" stroke-linecap="square" transform="translate(530, 708.5) scale(-1, 1) translate(-530, -708.5)"></line>
+    </g>
+</svg>
