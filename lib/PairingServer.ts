@@ -30,6 +30,7 @@ export class PairingServer extends EventEmitter {
   private port: number = 0;
   private _timeout: NodeJS.Timeout | null = null;
   private _announceInterval: NodeJS.Timeout | null = null;
+  private _pendingReject: ((err: Error) => void) | null = null;
   private log: (...args: any[]) => void;
 
   constructor(pkiManager: PkiManager, pluginIp: string, log?: (...args: any[]) => void) {
@@ -61,6 +62,10 @@ export class PairingServer extends EventEmitter {
     this.log('[PairingServer] Starting pairing on port', this.port, 'pluginIp:', this.pluginIp);
 
     return new Promise<PairingResult>((resolve, reject) => {
+      // Track the reject callback so stopPairing() can cancel a pending
+      // attempt rather than orphan the promise.
+      this._pendingReject = reject;
+
       // Create TLS server using the self-signed cert (for initial pairing handshake)
       this.server = tls.createServer(
         {
@@ -282,10 +287,10 @@ export class PairingServer extends EventEmitter {
 
   /** Stop the pairing server and clean up all resources. */
   async stopPairing(): Promise<void> {
-    this.cleanup();
+    this.cleanup({ rejectReason: 'Pairing cancelled' });
   }
 
-  private cleanup(): void {
+  private cleanup(opts: { rejectReason?: string } = {}): void {
     if (this._timeout) {
       clearTimeout(this._timeout);
       this._timeout = null;
@@ -304,6 +309,17 @@ export class PairingServer extends EventEmitter {
     if (this.server) {
       this.server.close();
       this.server = null;
+    }
+
+    // Reject any in-flight startPairing promise so callers' .catch fires
+    // instead of orphaning the promise. Cleared first so an inadvertent
+    // re-cleanup doesn't double-reject.
+    if (this._pendingReject && opts.rejectReason) {
+      const reject = this._pendingReject;
+      this._pendingReject = null;
+      reject(new Error(opts.rejectReason));
+    } else {
+      this._pendingReject = null;
     }
   }
 

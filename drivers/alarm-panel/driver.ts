@@ -41,6 +41,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
     // already exists.
     let panelIp = '';
     let pairingServer: PairingServer | null = null;
+    let sessionAlive = true; // gates bg emits when the user cancels
 
     const app = this.homey.app as QolsysApp;
     const pkiManager = app.getPkiManager();
@@ -48,6 +49,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
     // Clean up pairing server when session ends
     session.setHandler('disconnect', async () => {
       this.log('Pairing session disconnected, cleaning up');
+      sessionAlive = false;
       if (pairingServer) {
         await pairingServer.stopPairing();
         pairingServer = null;
@@ -65,13 +67,21 @@ export default class AlarmPanelDriver extends Homey.Driver {
     session.setHandler('start_pairing', async () => {
       this.log('start_pairing handler invoked, isPaired:', pkiManager.isPaired());
 
+      // safeEmit suppresses session emits after the user cancels — the
+      // session is gone but our bg promise + PairingServer events may
+      // still fire briefly during teardown.
+      const safeEmit = (event: string, data: any) => {
+        if (!sessionAlive) return;
+        session.emit(event, data).catch(() => undefined);
+      };
+
       // If already paired, skip certificate exchange
       if (pkiManager.isPaired()) {
         this.log('Already paired, skipping certificate exchange');
-        session.emit('pairing_status', 'Already paired! Loading devices...');
+        safeEmit('pairing_status', 'Already paired! Loading devices...');
         // Defer the done emit until after this handler returns so the
         // client has the start_pairing ack before navigating away.
-        setImmediate(() => session.emit('pairing_done', null));
+        setImmediate(() => safeEmit('pairing_done', null));
         return;
       }
 
@@ -97,31 +107,31 @@ export default class AlarmPanelDriver extends Homey.Driver {
       const localPairingServer = pairingServer; // capture for the bg promise
 
       pairingServer.on('listening', (port: number) => {
-        session.emit('pairing_status', `TLS server listening on port ${port}...`);
+        safeEmit('pairing_status', `TLS server listening on port ${port}...`);
       });
 
       pairingServer.on('advertising', (port: number) => {
-        session.emit('pairing_status', `TLS server ready on port ${port} — waiting for panel to connect...`);
+        safeEmit('pairing_status', `TLS server ready on port ${port} — waiting for panel to connect...`);
       });
 
       pairingServer.on('panel_disconnected', () => {
-        session.emit('pairing_status', 'Panel disconnected, waiting for reconnect...');
+        safeEmit('pairing_status', 'Panel disconnected, waiting for reconnect...');
       });
 
       // Run the long-poll in the background and signal completion via events
       localPairingServer.startPairing(300000) // 5 min timeout
         .then((result) => {
           panelIp = panelIp || result.panelIp;
-          session.emit('pairing_status', 'Certificate exchange complete!');
+          safeEmit('pairing_status', 'Certificate exchange complete!');
           if (panelIp) {
             this.homey.settings.set('panel_ip', panelIp);
           }
-          session.emit('pairing_done', null);
+          safeEmit('pairing_done', null);
         })
         .catch((err: Error) => {
           this.log('Pairing failed:', err.message);
           localPairingServer.stopPairing().catch(() => undefined);
-          session.emit('pairing_error', err.message || 'Pairing failed');
+          safeEmit('pairing_error', err.message || 'Pairing failed');
         });
 
       // Return now — UI gets a fast ack, pairing continues async.
