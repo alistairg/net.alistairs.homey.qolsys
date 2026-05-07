@@ -12,22 +12,12 @@
       background: #f5f5f5;
       padding: 14px;
       border-radius: 4px;
-      margin-bottom: 16px;
       font-size: 14px;
       line-height: 1.55;
     }
+    .blurb p { margin: 0; }
+    .blurb p + p { margin-top: 10px; }
     .blurb strong { color: #1a1a2e; }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #1a1a2e;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover { background: #2a2a4e; }
   </style>
 </head>
 <body>
@@ -35,15 +25,7 @@
 
   <div class="blurb">
     <p>This app pairs Homey with your Qolsys IQ Panel as a virtual <strong>IQ Remote</strong>. Pairing is a one-time certificate exchange — once complete, Homey reconnects automatically every time the panel is online.</p>
-    <p style="margin-bottom: 0;"><strong>Heads up:</strong> some panels enforce a limit on virtual remotes (3 on IQ Panel 2/2+, 8 on IQ Panel 4 / IQ Pro), and freeing a slot may require an alarm-company reset. Make sure you have a free slot before continuing.</p>
+    <p><strong>Heads up:</strong> some panels enforce a limit on virtual remotes (3 on IQ Panel 2/2+, 8 on IQ Panel 4 / IQ Pro), and freeing a slot may require an alarm-company reset. Make sure you have a free slot before continuing.</p>
   </div>
-
-  <button id="next">Continue to Pairing</button>
-
-  <script>
-    document.getElementById('next').addEventListener('click', function() {
-      Homey.showView('pairing');
-    });
-  </script>
 </body>
 </html>
