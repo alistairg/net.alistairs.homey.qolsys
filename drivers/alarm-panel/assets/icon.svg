@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960px" height="960px" viewBox="0 0 960 960" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>driver/partition/icon</title>
+    <g id="driver/partition/icon" stroke="none" fill="none">
+        <g id="Group" stroke-width="1" fill-rule="evenodd" transform="translate(19, 131)" stroke="#000000">
+            <rect id="Rectangle" stroke-width="30" x="15" y="15" width="891" height="668" rx="80"></rect>
+            <line x1="24.5" y1="542" x2="895.5" y2="542" id="Line" stroke-width="15" stroke-linecap="square"></line>
+        </g>
+        <rect id="Rectangle-2" stroke="#000000" stroke-width="15" x="99.5" y="212.5" width="760" height="397" rx="20"></rect>
+        <ellipse id="Oval" fill="#000000" fill-rule="evenodd" cx="480" cy="705.5" rx="25" ry="7.5"></ellipse>
+    </g>
+</svg>
