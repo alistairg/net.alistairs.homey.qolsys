@@ -8,12 +8,20 @@
     "alarm_tamper",
     "alarm_battery"
   ],
+  "energy": {
+    "batteries": ["CR2032"]
+  },
   "platforms": [
     "local"
   ],
   "connectivity": [
     "lan"
   ],
+  "images": {
+    "small":  "/drivers/contact-sensor/assets/images/image_s.jpg",
+    "large":  "/drivers/contact-sensor/assets/images/image_l.jpg",
+    "xlarge": "/drivers/contact-sensor/assets/images/image_xl.jpg"
+  },
   "pair": [
     {
       "id": "list_devices",

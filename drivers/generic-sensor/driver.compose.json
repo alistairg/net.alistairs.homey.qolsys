@@ -8,6 +8,9 @@
     "alarm_tamper",
     "alarm_battery"
   ],
+  "energy": {
+    "batteries": ["CR2032", "CR123A"]
+  },
   "platforms": [
     "local"
   ],
