@@ -8,7 +8,9 @@ import {
 
 const URI_PARTITION = 'content://com.qolsys.qolsyssettings/PartitionContentProvider/partition';
 const URI_SENSOR = 'content://com.qolsys.qolsyssettings/SensorContentProvider/sensor';
-const URI_SETTINGS = 'content://com.qolsys.qolsyssettings/QolsysSettingsContentProvider/qolsyssettings';
+// Real panel URI — note `QolsysSettingsProvider` (no `Content` in the middle),
+// inconsistent with all the other providers. Confirmed against live panel logs.
+const URI_SETTINGS = 'content://com.qolsys.qolsysprovider.QolsysSettingsProvider/qolsyssettings';
 const URI_STATE = 'content://com.qolsys.qolsyssettings/StateContentProvider/state';
 const URI_POWERG = 'content://com.qolsys.qolsyssettings/PowerGDeviceContentProvider/powerg_device';
 
