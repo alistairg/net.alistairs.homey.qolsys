@@ -27,6 +27,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Compose .homeycompose/* into the generated app.json — the
+      # validate action fails with "no app.json" otherwise. We don't
+      # commit the generated app.json (it'd churn on every source edit).
+      - run: npx --yes homey app build
       - name: Validate
         uses: athombv/github-action-homey-app-validate@master
         with:
