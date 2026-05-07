@@ -1,6 +1,6 @@
 import Homey from 'homey';
 import { QolsysZoneData, ZoneStatus } from './types';
-import { isZoneActive, MotionSensorTypes } from './ZoneTypes';
+import { isZoneActive } from './ZoneTypes';
 import { stripPort } from './NetUtil';
 
 import type QolsysApp from '../app';
@@ -32,40 +32,7 @@ export default class ZoneDevice extends Homey.Device {
     this.log('Zone device initialising:', this.getName());
 
     this.zoneId = this.getData().zoneId;
-
-    await this.migrateRemoveStaleCapabilities();
     await this.bindClient();
-  }
-
-  /**
-   * TEMPORARY one-shot migration. Devices paired before the
-   * fix-powerg-extras-scope branch landed received `measure_temperature`
-   * and `measure_luminance` regardless of sensor type. Only motion-class
-   * hardware actually reports those values; on non-motion zones they
-   * sat at 0 forever. Remove them on first init after the upgrade.
-   *
-   * Idempotent: once removed, hasCapability returns false and the
-   * branches are no-ops.
-   *
-   * TODO: drop this method once Alistair's dev install has been
-   * migrated through it once. Net-new pairs after the scope fix will
-   * never have these caps in the first place.
-   */
-  private async migrateRemoveStaleCapabilities(): Promise<void> {
-    const sensorType = (this.getSetting('sensor_type') as string) ?? '';
-    const isMotionClass = MotionSensorTypes.includes(sensorType);
-    if (isMotionClass) return;
-
-    if (this.hasCapability('measure_temperature')) {
-      await this.removeCapability('measure_temperature')
-        .then(() => this.log('Removed stale measure_temperature'))
-        .catch((err) => this.log('Failed to remove measure_temperature:', err));
-    }
-    if (this.hasCapability('measure_luminance')) {
-      await this.removeCapability('measure_luminance')
-        .then(() => this.log('Removed stale measure_luminance'))
-        .catch((err) => this.log('Failed to remove measure_luminance:', err));
-    }
   }
 
   async onUninit(): Promise<void> {
