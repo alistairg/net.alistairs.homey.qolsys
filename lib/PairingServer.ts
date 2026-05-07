@@ -30,6 +30,7 @@ export class PairingServer extends EventEmitter {
   private port: number = 0;
   private _timeout: NodeJS.Timeout | null = null;
   private _announceInterval: NodeJS.Timeout | null = null;
+  private _pendingReject: ((err: Error) => void) | null = null;
   private log: (...args: any[]) => void;
 
   constructor(pkiManager: PkiManager, pluginIp: string, log?: (...args: any[]) => void) {
@@ -49,8 +50,12 @@ export class PairingServer extends EventEmitter {
    * @param timeoutMs How long to wait for the panel to connect (default: 5 minutes)
    */
   async startPairing(timeoutMs: number = 300000): Promise<PairingResult> {
-    // Pick random port 50000–55000
-    this.port = 50000 + Math.floor(Math.random() * 5001);
+    // Fixed port. Earlier versions picked a random port in 50000–55000 each
+    // session, which made stale mDNS cache entries on the panel point at
+    // dead ports across restarts. A fixed port means a stale SRV record
+    // resolves to the same port we're listening on now, so the panel
+    // never gets a connection-refused even if its mDNS cache lags.
+    this.port = 51234;
 
     // Load PKI for TLS server context
     const pki = this.pkiManager.loadPki();
@@ -61,6 +66,10 @@ export class PairingServer extends EventEmitter {
     this.log('[PairingServer] Starting pairing on port', this.port, 'pluginIp:', this.pluginIp);
 
     return new Promise<PairingResult>((resolve, reject) => {
+      // Track the reject callback so stopPairing() can cancel a pending
+      // attempt rather than orphan the promise.
+      this._pendingReject = reject;
+
       // Create TLS server using the self-signed cert (for initial pairing handshake)
       this.server = tls.createServer(
         {
@@ -96,10 +105,14 @@ export class PairingServer extends EventEmitter {
         const serviceType = '_http._tcp.local';
         const hostName = 'NsdPairService.local';
 
+        // SRV + A TTLs deliberately kept short so stale cache entries on
+        // the panel expire quickly rather than tripping a connection
+        // attempt against a dead instance. PTR/TXT can stay long since
+        // they don't carry per-instance state.
         const ptrRecord = { name: serviceType, type: 'PTR' as const, ttl: 4500, data: serviceName };
-        const srvRecord = { name: serviceName, type: 'SRV' as const, ttl: 120, data: { port: this.port, target: hostName, weight: 0, priority: 0 } };
+        const srvRecord = { name: serviceName, type: 'SRV' as const, ttl: 30, data: { port: this.port, target: hostName, weight: 0, priority: 0 } };
         const txtRecord = { name: serviceName, type: 'TXT' as const, ttl: 4500, data: Buffer.alloc(0) };
-        const aRecord = { name: hostName, type: 'A' as const, ttl: 120, data: this.pluginIp };
+        const aRecord = { name: hostName, type: 'A' as const, ttl: 30, data: this.pluginIp };
         // DNS-SD meta-query: advertise that _http._tcp exists as a service type
         const metaPtrRecord = { name: '_services._dns-sd._udp.local', type: 'PTR' as const, ttl: 4500, data: serviceType };
 
@@ -282,10 +295,10 @@ export class PairingServer extends EventEmitter {
 
   /** Stop the pairing server and clean up all resources. */
   async stopPairing(): Promise<void> {
-    this.cleanup();
+    this.cleanup({ rejectReason: 'Pairing cancelled' });
   }
 
-  private cleanup(): void {
+  private cleanup(opts: { rejectReason?: string } = {}): void {
     if (this._timeout) {
       clearTimeout(this._timeout);
       this._timeout = null;
@@ -304,6 +317,17 @@ export class PairingServer extends EventEmitter {
     if (this.server) {
       this.server.close();
       this.server = null;
+    }
+
+    // Reject any in-flight startPairing promise so callers' .catch fires
+    // instead of orphaning the promise. Cleared first so an inadvertent
+    // re-cleanup doesn't double-reject.
+    if (this._pendingReject && opts.rejectReason) {
+      const reject = this._pendingReject;
+      this._pendingReject = null;
+      reject(new Error(opts.rejectReason));
+    } else {
+      this._pendingReject = null;
     }
   }
 
