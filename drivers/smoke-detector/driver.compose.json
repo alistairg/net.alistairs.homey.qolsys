@@ -3,21 +3,51 @@
     "en": "Smoke Detector"
   },
   "class": "sensor",
-  "capabilities": ["alarm_smoke", "alarm_tamper", "alarm_battery"],
-  "platforms": ["local"],
-  "connectivity": ["lan"],
-  "images": {
-    "small":  "/drivers/smoke-detector/assets/images/small.png",
-    "large":  "/drivers/smoke-detector/assets/images/large.png",
-    "xlarge": "/drivers/smoke-detector/assets/images/xlarge.png"
-  },
+  "capabilities": [
+    "alarm_smoke",
+    "alarm_tamper",
+    "alarm_battery"
+  ],
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
   "pair": [
-    { "id": "list_devices", "template": "list_devices", "navigation": { "next": "add_devices" } },
-    { "id": "add_devices", "template": "add_devices" }
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
   ],
   "settings": [
-    { "id": "sensor_zone_id", "type": "label", "label": { "en": "Zone ID" } },
-    { "id": "sensor_type", "type": "label", "label": { "en": "Sensor Type" } },
-    { "id": "battery_type", "type": "label", "label": { "en": "Battery Type" } }
+    {
+      "id": "sensor_zone_id",
+      "type": "label",
+      "label": {
+        "en": "Zone ID"
+      }
+    },
+    {
+      "id": "sensor_type",
+      "type": "label",
+      "label": {
+        "en": "Sensor Type"
+      }
+    },
+    {
+      "id": "battery_type",
+      "type": "label",
+      "label": {
+        "en": "Battery Type"
+      }
+    }
   ]
 }
