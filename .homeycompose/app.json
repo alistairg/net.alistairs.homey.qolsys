@@ -19,5 +19,9 @@
   "author": {
     "name": "Alistair Galbraith",
     "email": "homey@alistairs.net"
+  },
+  "api": {
+    "getBackup": { "method": "GET", "path": "/backup" },
+    "postRestore": { "method": "POST", "path": "/restore" }
   }
 }
