@@ -16,6 +16,11 @@
     "security"
   ],
   "brandColor": "#3A6286",
+  "homeyCommunityTopicId": 154627,
+  "source": "https://github.com/alistairg/net.alistairs.homey.qolsys",
+  "bugs": {
+    "url": "https://github.com/alistairg/net.alistairs.homey.qolsys/issues"
+  },
   "permissions": [],
   "images": {
     "small":  "/assets/images/image_sm.jpg",
