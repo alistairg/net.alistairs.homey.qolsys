@@ -77,17 +77,30 @@
     var spinnerEl = document.getElementById('spinner');
     var errorEl = document.getElementById('error');
 
+    function showError(msg) {
+      spinnerEl.style.display = 'none';
+      errorEl.textContent = msg || 'Pairing failed.';
+      errorEl.style.display = 'block';
+      statusEl.textContent = 'Pairing failed.';
+    }
+
     Homey.on('pairing_status', function(msg) {
       statusEl.textContent = msg;
     });
 
-    Homey.emit('start_pairing').then(function() {
+    // The driver does the cert exchange in the background and signals
+    // completion via these events — Homey.emit's ack times out at ~30s,
+    // so we can't await it for the full pairing window.
+    Homey.on('pairing_done', function() {
       Homey.showView('list_devices');
-    }).catch(function(err) {
-      spinnerEl.style.display = 'none';
-      errorEl.textContent = err.message || 'Pairing failed.';
-      errorEl.style.display = 'block';
-      statusEl.textContent = 'Pairing failed.';
+    });
+
+    Homey.on('pairing_error', function(msg) {
+      showError(msg);
+    });
+
+    Homey.emit('start_pairing').catch(function(err) {
+      showError(err && err.message ? err.message : 'Could not start pairing.');
     });
   </script>
 </body>

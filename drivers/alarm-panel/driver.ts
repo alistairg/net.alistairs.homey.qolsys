@@ -54,7 +54,14 @@ export default class AlarmPanelDriver extends Homey.Driver {
       }
     });
 
-    // Start pairing (certificate exchange)
+    // Start pairing (certificate exchange).
+    //
+    // The handler returns immediately after kicking off the work; the
+    // pair page listens for `pairing_done` / `pairing_error` events.
+    // We can't `await` the 5-minute startPairing here: Homey's client-side
+    // emit ACK has a ~30-second default timeout, so awaiting longer than
+    // that surfaces as a spurious "timed out" in the pair UI even though
+    // the server is still happily waiting.
     session.setHandler('start_pairing', async () => {
       this.log('start_pairing handler invoked, isPaired:', pkiManager.isPaired());
 
@@ -62,6 +69,9 @@ export default class AlarmPanelDriver extends Homey.Driver {
       if (pkiManager.isPaired()) {
         this.log('Already paired, skipping certificate exchange');
         session.emit('pairing_status', 'Already paired! Loading devices...');
+        // Defer the done emit until after this handler returns so the
+        // client has the start_pairing ack before navigating away.
+        setImmediate(() => session.emit('pairing_done', null));
         return;
       }
 
@@ -84,6 +94,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
 
       // Start pairing server
       pairingServer = new PairingServer(pkiManager, pluginIp, this.log.bind(this));
+      const localPairingServer = pairingServer; // capture for the bg promise
 
       pairingServer.on('listening', (port: number) => {
         session.emit('pairing_status', `TLS server listening on port ${port}...`);
@@ -97,20 +108,23 @@ export default class AlarmPanelDriver extends Homey.Driver {
         session.emit('pairing_status', 'Panel disconnected, waiting for reconnect...');
       });
 
-      try {
-        const result = await pairingServer.startPairing(300000); // 5 min timeout
-        panelIp = panelIp || result.panelIp;
+      // Run the long-poll in the background and signal completion via events
+      localPairingServer.startPairing(300000) // 5 min timeout
+        .then((result) => {
+          panelIp = panelIp || result.panelIp;
+          session.emit('pairing_status', 'Certificate exchange complete!');
+          if (panelIp) {
+            this.homey.settings.set('panel_ip', panelIp);
+          }
+          session.emit('pairing_done', null);
+        })
+        .catch((err: Error) => {
+          this.log('Pairing failed:', err.message);
+          localPairingServer.stopPairing().catch(() => undefined);
+          session.emit('pairing_error', err.message || 'Pairing failed');
+        });
 
-        session.emit('pairing_status', 'Certificate exchange complete!');
-
-        // Store panel IP from pairing result
-        if (panelIp) {
-          this.homey.settings.set('panel_ip', panelIp);
-        }
-      } catch (err) {
-        await pairingServer.stopPairing();
-        throw err;
-      }
+      // Return now — UI gets a fast ack, pairing continues async.
     });
 
     // List partition devices (after panel connect + initial database sync)
