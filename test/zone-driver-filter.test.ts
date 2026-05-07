@@ -5,6 +5,7 @@ import {
   SmokeDetectorTypes,
   CODetectorTypes,
   WaterSensorTypes,
+  GlassBreakDetectorTypes,
   isGenericSensorType,
 } from '../lib/ZoneTypes';
 import { ZoneSensorType } from '../lib/types';
@@ -52,6 +53,13 @@ describe('per-driver sensor type filters', () => {
   it('water-sensor claims water only', () => {
     expect([...WaterSensorTypes]).toEqual([ZoneSensorType.WATER]);
   });
+
+  it('glass-break-detector claims glass break + panel glass break', () => {
+    expect([...GlassBreakDetectorTypes].sort()).toEqual([
+      ZoneSensorType.GLASS_BREAK,
+      ZoneSensorType.PANEL_GLASS_BREAK,
+    ].sort());
+  });
 });
 
 describe('generic-sensor type filter', () => {
@@ -59,8 +67,6 @@ describe('generic-sensor type filter', () => {
     // Spot-check a representative cross-section of types that fall
     // through to the catch-all driver.
     for (const t of [
-      ZoneSensorType.GLASS_BREAK,
-      ZoneSensorType.PANEL_GLASS_BREAK,
       ZoneSensorType.FREEZE,
       ZoneSensorType.HEAT,
       ZoneSensorType.HIGH_TEMPERATURE,
@@ -84,6 +90,8 @@ describe('generic-sensor type filter', () => {
       ZoneSensorType.SMOKE_DETECTOR,
       ZoneSensorType.CO_DETECTOR,
       ZoneSensorType.WATER,
+      ZoneSensorType.GLASS_BREAK,
+      ZoneSensorType.PANEL_GLASS_BREAK,
     ]) {
       expect(isGenericSensorType(t)).toBe(false);
     }
@@ -110,6 +118,7 @@ describe('partition invariant: no type claimed by two drivers', () => {
     ...SmokeDetectorTypes,
     ...CODetectorTypes,
     ...WaterSensorTypes,
+    ...GlassBreakDetectorTypes,
   ];
 
   it('specific drivers do not overlap with each other', () => {

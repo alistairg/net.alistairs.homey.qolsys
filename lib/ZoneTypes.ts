@@ -121,12 +121,18 @@ export const WaterSensorTypes: readonly string[] = [
   ZoneSensorType.WATER,
 ];
 
+export const GlassBreakDetectorTypes: readonly string[] = [
+  ZoneSensorType.GLASS_BREAK,
+  ZoneSensorType.PANEL_GLASS_BREAK,
+];
+
 const SpecificDriverTypeSet: Set<string> = new Set([
   ...ContactSensorTypes,
   ...MotionSensorTypes,
   ...SmokeDetectorTypes,
   ...CODetectorTypes,
   ...WaterSensorTypes,
+  ...GlassBreakDetectorTypes,
 ]);
 
 /**

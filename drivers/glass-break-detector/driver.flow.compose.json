@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "glass-break-detector_tampered", "title": { "en": "Glass break detector tampered" } }
+  ]
+}
