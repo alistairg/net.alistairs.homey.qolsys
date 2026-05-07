@@ -1,0 +1,754 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "net.alistairs.homey.qolsys",
+  "version": "1.0.2",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Qolsys IQ"
+  },
+  "description": {
+    "en": "Integrates with Qolsys IQ Panel alarm systems via the IQ Remote protocol"
+  },
+  "category": [
+    "security"
+  ],
+  "brandColor": "#3A6286",
+  "homeyCommunityTopicId": 154627,
+  "source": "https://github.com/alistairg/net.alistairs.homey.qolsys",
+  "bugs": {
+    "url": "https://github.com/alistairg/net.alistairs.homey.qolsys/issues"
+  },
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/image_sm.jpg",
+    "large": "/assets/images/image_lg.jpg",
+    "xlarge": "/assets/images/image_xl.jpg"
+  },
+  "author": {
+    "name": "Alistair Galbraith"
+  },
+  "api": {
+    "getBackup": {
+      "method": "GET",
+      "path": "/backup"
+    },
+    "postRestore": {
+      "method": "POST",
+      "path": "/restore"
+    }
+  },
+  "flow": {
+    "triggers": [
+      {
+        "id": "alarm_triggered",
+        "title": {
+          "en": "Alarm triggered"
+        },
+        "tokens": [
+          {
+            "name": "partition_name",
+            "type": "string",
+            "title": {
+              "en": "Partition"
+            },
+            "example": {
+              "en": "Partition 1"
+            }
+          },
+          {
+            "name": "alarm_type",
+            "type": "string",
+            "title": {
+              "en": "Alarm Type"
+            },
+            "example": {
+              "en": "Police Emergency"
+            }
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          }
+        ]
+      },
+      {
+        "id": "co-detector_tampered",
+        "title": {
+          "en": "CO detector tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=co-detector"
+          }
+        ]
+      },
+      {
+        "id": "contact-sensor_tampered",
+        "title": {
+          "en": "Contact sensor tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=contact-sensor"
+          }
+        ]
+      },
+      {
+        "id": "glass-break-detector_tampered",
+        "title": {
+          "en": "Glass break detector tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=glass-break-detector"
+          }
+        ]
+      },
+      {
+        "id": "motion-sensor_tampered",
+        "title": {
+          "en": "Motion sensor tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=motion-sensor"
+          }
+        ]
+      },
+      {
+        "id": "smoke-detector_tampered",
+        "title": {
+          "en": "Smoke detector tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=smoke-detector"
+          }
+        ]
+      },
+      {
+        "id": "water-sensor_tampered",
+        "title": {
+          "en": "Water sensor tampered"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=water-sensor"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "arm_away",
+        "title": {
+          "en": "Arm away"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          }
+        ]
+      },
+      {
+        "id": "arm_home",
+        "title": {
+          "en": "Arm home (stay)"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          }
+        ]
+      },
+      {
+        "id": "disarm",
+        "title": {
+          "en": "Disarm"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          }
+        ]
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Alarm Partition"
+      },
+      "class": "homealarm",
+      "capabilities": [
+        "homealarm_state",
+        "alarm_generic",
+        "alarm_tamper",
+        "arm_mode",
+        "alarm_arming",
+        "alarm_entry_delay",
+        "ready_to_arm"
+      ],
+      "capabilitiesOptions": {
+        "alarm_generic": {
+          "title": {
+            "en": "Alarm sounding"
+          }
+        },
+        "alarm_tamper": {
+          "title": {
+            "en": "Panel tamper"
+          }
+        }
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/alarm-panel/assets/images/image_s.jpg",
+        "large": "/drivers/alarm-panel/assets/images/image_l.jpg",
+        "xlarge": "/drivers/alarm-panel/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "configure",
+          "navigation": {
+            "next": "pairing"
+          }
+        },
+        {
+          "id": "pairing",
+          "navigation": {
+            "prev": "configure"
+          }
+        },
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "panel_ip",
+          "type": "text",
+          "label": {
+            "en": "Panel IP Address"
+          },
+          "hint": {
+            "en": "The IP address of your Qolsys IQ Panel"
+          }
+        },
+        {
+          "id": "partition_id",
+          "type": "label",
+          "label": {
+            "en": "Partition ID"
+          }
+        }
+      ],
+      "id": "alarm-panel"
+    },
+    {
+      "name": {
+        "en": "CO Detector"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_co",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR123A"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/co-detector/assets/images/image_s.jpg",
+        "large": "/drivers/co-detector/assets/images/image_l.jpg",
+        "xlarge": "/drivers/co-detector/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "co-detector"
+    },
+    {
+      "name": {
+        "en": "Contact Sensor"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_contact",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR2032"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/contact-sensor/assets/images/image_s.jpg",
+        "large": "/drivers/contact-sensor/assets/images/image_l.jpg",
+        "xlarge": "/drivers/contact-sensor/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "contact-sensor"
+    },
+    {
+      "name": {
+        "en": "Glass Break Detector"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_generic",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR123A"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/glass-break-detector/assets/images/image_s.jpg",
+        "large": "/drivers/glass-break-detector/assets/images/image_l.jpg",
+        "xlarge": "/drivers/glass-break-detector/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "glass-break-detector"
+    },
+    {
+      "name": {
+        "en": "Motion Sensor"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_motion",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR123A"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/motion-sensor/assets/images/image_s.jpg",
+        "large": "/drivers/motion-sensor/assets/images/image_l.jpg",
+        "xlarge": "/drivers/motion-sensor/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "motion-sensor"
+    },
+    {
+      "name": {
+        "en": "Smoke Detector"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_smoke",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR123A"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/smoke-detector/assets/images/image_s.jpg",
+        "large": "/drivers/smoke-detector/assets/images/image_l.jpg",
+        "xlarge": "/drivers/smoke-detector/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "smoke-detector"
+    },
+    {
+      "name": {
+        "en": "Water Sensor"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_water",
+        "alarm_tamper",
+        "alarm_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "CR2032"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/water-sensor/assets/images/image_s.jpg",
+        "large": "/drivers/water-sensor/assets/images/image_l.jpg",
+        "xlarge": "/drivers/water-sensor/assets/images/image_xl.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "id": "sensor_zone_id",
+          "type": "label",
+          "label": {
+            "en": "Zone ID"
+          }
+        },
+        {
+          "id": "sensor_type",
+          "type": "label",
+          "label": {
+            "en": "Sensor Type"
+          }
+        },
+        {
+          "id": "battery_type",
+          "type": "label",
+          "label": {
+            "en": "Battery Type"
+          }
+        }
+      ],
+      "id": "water-sensor"
+    }
+  ],
+  "capabilities": {
+    "alarm_arming": {
+      "type": "boolean",
+      "title": {
+        "en": "Exit delay"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Exit delay started"
+      },
+      "insightsTitleFalse": {
+        "en": "Exit delay ended"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/arming.svg"
+    },
+    "alarm_entry_delay": {
+      "type": "boolean",
+      "title": {
+        "en": "Entry delay"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Entry delay started"
+      },
+      "insightsTitleFalse": {
+        "en": "Entry delay ended"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/entry-delay.svg"
+    },
+    "arm_mode": {
+      "type": "enum",
+      "title": {
+        "en": "Arm mode"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "disarmed",
+          "title": {
+            "en": "Disarmed"
+          }
+        },
+        {
+          "id": "arm_away",
+          "title": {
+            "en": "Armed away"
+          }
+        },
+        {
+          "id": "arm_stay",
+          "title": {
+            "en": "Armed home"
+          }
+        },
+        {
+          "id": "arm_night",
+          "title": {
+            "en": "Armed night"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/arm-mode.svg"
+    },
+    "ready_to_arm": {
+      "type": "boolean",
+      "title": {
+        "en": "All secure"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/ready.svg"
+    }
+  }
+}
