@@ -34,20 +34,27 @@ lib/
   PairingServer.ts                  — TLS server + mDNS for pairing exchange
   QolsysPanelClient.ts              — MQTT client, reconnection, arm/disarm commands
   DatabaseParser.ts                 — parse fulldbdata + apply dbChanged events
-  ZoneTypes.ts                      — sensortype → Homey capability mapping
+  ZoneTypes.ts                      — sensortype → Homey capability mapping + per-driver type lists
+  ZoneDevice.ts                     — shared device class for every per-type zone driver
+  ZoneDriver.ts                     — abstract driver class; subclasses just declare claimsZoneType
 drivers/
-  alarm-panel/
+  alarm-panel/                      — partition device (homealarm class)
     driver.ts                       — pairing flow, flow card registration
     device.ts                       — partition device, arm/disarm, state sync
     driver.compose.json
     driver.flow.compose.json
-    pair/configure.html             — IP + user code entry
-    pair/pairing.html               — pairing progress spinner
-  zone-sensor/
-    driver.ts                       — zone listing during pairing
-    device.ts                       — zone sensor, capability updates
-    driver.compose.json
-    driver.flow.compose.json
+    pair/configure.html             — pair-flow intro page
+    pair/pairing.html               — pairing progress + panel-side instructions
+  contact-sensor/                   — Door_Window, Door_Window_M, Tilt → alarm_contact
+  motion-sensor/                    — Motion, Panel Motion, Occupancy Sensor → alarm_motion
+  smoke-detector/                   — SmokeDetector, Smoke_M → alarm_smoke
+  co-detector/                      — CODetector → alarm_co
+  water-sensor/                     — Water → alarm_water
+  generic-sensor/                   — catch-all for everything else (glass break, freeze, shock, etc.) → alarm_generic
+    driver.ts                       — extends ZoneDriver, returns the sensor types it claims
+    device.ts                       — re-exports ZoneDevice (no per-type subclass needed)
+    driver.compose.json             — declares this driver's capabilities + name + images
+    driver.flow.compose.json        — `<driver-id>_tampered` trigger (must be globally unique)
 assets/icon.svg
 locales/en.json
 ```
@@ -127,17 +134,34 @@ Live updates arrive as `dbChanged` events on `iq2meid`:
 }
 ```
 
-### Zone Type Mapping (ZoneTypes.ts)
-| sensortype | Homey Capability |
-|---|---|
-| `Door_Window`, `Door_Window_M`, `Tilt` | `alarm_contact` |
-| `Motion`, `Panel Motion`, `Occupancy Sensor` | `alarm_motion` |
-| `SmokeDetector`, `Smoke_M` | `alarm_smoke` |
-| `CODetector` | `alarm_co` |
-| `Water` | `alarm_water` |
-| Everything else | `alarm_generic` |
+### Zone drivers (one per sensor category)
+The 6 per-type drivers each handle a specific subset of Qolsys sensor types. The mapping is the source of truth for which driver claims which type during pairing.
 
-All zones also get `alarm_tamper` + `alarm_battery`. Keypad and Bluetooth types are excluded.
+| Driver | sensortypes claimed | Primary capability |
+|---|---|---|
+| `contact-sensor` | `Door_Window`, `Door_Window_M`, `Tilt` | `alarm_contact` |
+| `motion-sensor` | `Motion`, `Panel Motion`, `Occupancy Sensor` | `alarm_motion` |
+| `smoke-detector` | `SmokeDetector`, `Smoke_M` | `alarm_smoke` |
+| `co-detector` | `CODetector` | `alarm_co` |
+| `water-sensor` | `Water` | `alarm_water` |
+| `generic-sensor` | everything else (glass break, freeze, shock, doorbell, key fob, siren, temperature, etc.) | `alarm_generic` |
+
+All zones also get `alarm_tamper` + `alarm_battery`. PowerG zones additionally get `measure_temperature` + `measure_luminance` added at pair time. Keypad / Bluetooth / TakeoverModule types are filtered out entirely.
+
+The pairing flow for each driver shows only the zones it claims. The exclusivity invariant — every includable type claimed by exactly one driver — is enforced by `test/zone-driver-filter.test.ts`.
+
+### Why per-type drivers (and how they share code)
+Splitting one "Zone Sensor" driver into six per-type drivers gives users distinct icons in the device list and a clearer pairing flow ("Add Smoke Detector" instead of "Add Zone Sensor → choose from list"). The downside is six driver folders.
+
+To avoid duplicating logic across them, the actual implementation lives in two shared classes:
+
+- **`lib/ZoneDevice.ts`** — handles all device-level behaviour (binding to the shared MQTT client, listening for zone updates, mapping `ZoneStatus` → primary alarm capability, tamper/battery, PowerG temperature + luminance). The class finds the device's primary capability dynamically via `getCapabilities()` rather than baking it in. Each `drivers/<type>/device.ts` is just `module.exports = ZoneDevice`.
+- **`lib/ZoneDriver.ts`** — handles the pairing flow + tampered flow card. Subclasses implement `claimsZoneType(t)` to declare their type filter; everything else is generic.
+
+Adding a new per-type driver is therefore: a 4-line `driver.ts` + a 3-line `device.ts` + a `driver.compose.json` declaring its capabilities + a `driver.flow.compose.json` with a `<driver-id>_tampered` trigger.
+
+### Flow card ID uniqueness
+Athom requires every flow card id to be globally unique across the entire app. Six drivers all using the same `zone_tampered` id fails validation. Each driver's tampered trigger is therefore named `<driver-id>_tampered` (e.g. `contact-sensor_tampered`, `motion-sensor_tampered`). `ZoneDriver.tamperedFlowCardId` derives this from `this.id` so subclasses don't need to repeat it.
 
 Active statuses: `Open`, `Active`, `Activated`, `Alarmed`, `Occupied`
 
@@ -152,7 +176,7 @@ Active statuses: `Open`, `Active`, `Activated`, `Alarmed`, `Occupied`
 ### Flow Cards
 **Alarm Panel triggers:** `alarm_triggered` (tokens: partition_name, alarm_type)
 **Alarm Panel actions:** `arm_away`, `arm_home`, `disarm`
-**Zone Sensor triggers:** `zone_tampered`
+**Zone driver triggers (one per driver, all globally unique):** `contact-sensor_tampered`, `motion-sensor_tampered`, `smoke-detector_tampered`, `co-detector_tampered`, `water-sensor_tampered`, `generic-sensor_tampered`
 
 Standard Homey contact/motion triggers work automatically via capabilities.
 

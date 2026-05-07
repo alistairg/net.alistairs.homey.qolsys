@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "motion-sensor_tampered", "title": { "en": "Motion sensor tampered" } }
+  ]
+}

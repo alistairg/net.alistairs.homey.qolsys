@@ -1,0 +1,23 @@
+{
+  "name": {
+    "en": "Generic Sensor"
+  },
+  "class": "sensor",
+  "capabilities": ["alarm_generic", "alarm_tamper", "alarm_battery"],
+  "platforms": ["local"],
+  "connectivity": ["lan"],
+  "images": {
+    "small":  "/drivers/generic-sensor/assets/images/small.png",
+    "large":  "/drivers/generic-sensor/assets/images/large.png",
+    "xlarge": "/drivers/generic-sensor/assets/images/xlarge.png"
+  },
+  "pair": [
+    { "id": "list_devices", "template": "list_devices", "navigation": { "next": "add_devices" } },
+    { "id": "add_devices", "template": "add_devices" }
+  ],
+  "settings": [
+    { "id": "sensor_zone_id", "type": "label", "label": { "en": "Zone ID" } },
+    { "id": "sensor_type", "type": "label", "label": { "en": "Sensor Type" } },
+    { "id": "battery_type", "type": "label", "label": { "en": "Battery Type" } }
+  ]
+}

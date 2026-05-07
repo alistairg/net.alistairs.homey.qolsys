@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "co-detector_tampered", "title": { "en": "CO detector tampered" } }
+  ]
+}

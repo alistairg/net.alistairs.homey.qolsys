@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "contact-sensor_tampered", "title": { "en": "Contact sensor tampered" } }
+  ]
+}

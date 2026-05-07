@@ -87,3 +87,54 @@ const EXCLUDED_SENSOR_TYPES: Set<string> = new Set([
 export function shouldIncludeZone(sensorType: string): boolean {
   return !EXCLUDED_SENSOR_TYPES.has(sensorType);
 }
+
+// ---------------------------------------------------------------------------
+// Per-driver type lists — each `drivers/<x>/driver.ts` references one of
+// these to filter the zone list during pairing. Listed here (rather than
+// inline in each driver) so the "what is generic" calculation can be
+// derived: if a type isn't claimed by any specific driver, generic-sensor
+// claims it.
+// ---------------------------------------------------------------------------
+
+export const ContactSensorTypes: readonly string[] = [
+  ZoneSensorType.DOOR_WINDOW,
+  ZoneSensorType.DOOR_WINDOW_M,
+  ZoneSensorType.TILT,
+];
+
+export const MotionSensorTypes: readonly string[] = [
+  ZoneSensorType.MOTION,
+  ZoneSensorType.PANEL_MOTION,
+  ZoneSensorType.OCCUPANCY,
+];
+
+export const SmokeDetectorTypes: readonly string[] = [
+  ZoneSensorType.SMOKE_DETECTOR,
+  ZoneSensorType.SMOKE_M,
+];
+
+export const CODetectorTypes: readonly string[] = [
+  ZoneSensorType.CO_DETECTOR,
+];
+
+export const WaterSensorTypes: readonly string[] = [
+  ZoneSensorType.WATER,
+];
+
+const SpecificDriverTypeSet: Set<string> = new Set([
+  ...ContactSensorTypes,
+  ...MotionSensorTypes,
+  ...SmokeDetectorTypes,
+  ...CODetectorTypes,
+  ...WaterSensorTypes,
+]);
+
+/**
+ * Returns true if this sensor type should be claimed by the
+ * generic-sensor driver: it's includable (not keypad/bluetooth/takeover)
+ * and no specific driver claims it.
+ */
+export function isGenericSensorType(sensorType: string): boolean {
+  if (!shouldIncludeZone(sensorType)) return false;
+  return !SpecificDriverTypeSet.has(sensorType);
+}

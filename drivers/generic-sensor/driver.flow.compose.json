@@ -1,0 +1,5 @@
+{
+  "triggers": [
+    { "id": "generic-sensor_tampered", "title": { "en": "Sensor tampered" } }
+  ]
+}
