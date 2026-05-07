@@ -17,6 +17,10 @@ test-*.js
 test-*.py
 test-config/
 
+# Vitest unit tests
+test/
+vitest.config.ts
+
 # Captured logs
 *.log
 
