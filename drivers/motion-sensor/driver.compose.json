@@ -17,6 +17,11 @@
   "connectivity": [
     "lan"
   ],
+  "images": {
+    "small":  "/drivers/motion-sensor/assets/images/image_s.jpg",
+    "large":  "/drivers/motion-sensor/assets/images/image_l.jpg",
+    "xlarge": "/drivers/motion-sensor/assets/images/image_xl.jpg"
+  },
   "pair": [
     {
       "id": "list_devices",
