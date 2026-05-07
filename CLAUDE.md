@@ -1,4 +1,4 @@
-# Homey Driver: Qolsys IQ Panel (IQ Remote Protocol)
+# Homey Driver: Qolsys IQ (IQ Remote Protocol)
 
 ## Source Reference
 Protocol reverse-engineered by Eric Hylands. Reference implementations:

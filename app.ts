@@ -9,7 +9,7 @@ export default class QolsysApp extends Homey.App {
   private _pkiManager: PkiManager | null = null;
 
   async onInit(): Promise<void> {
-    this.log('Qolsys IQ Panel app started');
+    this.log('Qolsys IQ app started');
     this._pkiManager = new PkiManager(this.homey);
   }
 
