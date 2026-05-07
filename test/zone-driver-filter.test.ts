@@ -6,20 +6,23 @@ import {
   CODetectorTypes,
   WaterSensorTypes,
   GlassBreakDetectorTypes,
-  isGenericSensorType,
+  UnsupportedZoneTypes,
+  shouldIncludeZone,
 } from '../lib/ZoneTypes';
 import { ZoneSensorType } from '../lib/types';
 
 /**
  * These tests pin down which Qolsys sensor types each per-driver
  * filter claims. Each driver's `claimsZoneType` is a thin wrapper
- * around the corresponding constant list (or `isGenericSensorType`),
- * so testing the constants exercises the filter logic.
+ * around the corresponding constant list, so testing the constants
+ * exercises the filter logic.
  *
- * The contract this test enforces: every sensor type Homey will
- * surface as a device is claimed by exactly one driver. No type
- * claimed by zero drivers (silent drop) and no type claimed by two
- * drivers (duplicate listings during pairing).
+ * The contract this test enforces: every Qolsys sensor type goes into
+ * exactly one bucket — claimed by a specific driver, excluded entirely
+ * from pairing, or explicitly listed as unsupported (no Homey driver
+ * yet, deliberate decision rather than a silent drop). Adding a new
+ * `ZoneSensorType` to the enum without categorising it will fail the
+ * exhaustiveness test below.
  */
 
 describe('per-driver sensor type filters', () => {
@@ -62,56 +65,7 @@ describe('per-driver sensor type filters', () => {
   });
 });
 
-describe('generic-sensor type filter', () => {
-  it('claims types not handled by any specific driver', () => {
-    // Spot-check a representative cross-section of types that fall
-    // through to the catch-all driver.
-    for (const t of [
-      ZoneSensorType.FREEZE,
-      ZoneSensorType.HEAT,
-      ZoneSensorType.HIGH_TEMPERATURE,
-      ZoneSensorType.SHOCK,
-      ZoneSensorType.DOORBELL,
-      ZoneSensorType.AUXILIARY_PENDANT,
-      ZoneSensorType.KEY_FOB,
-      ZoneSensorType.SIREN,
-      ZoneSensorType.TAMPER,
-      ZoneSensorType.TEMPERATURE,
-      ZoneSensorType.TRANSLATOR,
-    ]) {
-      expect(isGenericSensorType(t)).toBe(true);
-    }
-  });
-
-  it('does not claim types that have a specific driver', () => {
-    for (const t of [
-      ZoneSensorType.DOOR_WINDOW,
-      ZoneSensorType.MOTION,
-      ZoneSensorType.SMOKE_DETECTOR,
-      ZoneSensorType.CO_DETECTOR,
-      ZoneSensorType.WATER,
-      ZoneSensorType.GLASS_BREAK,
-      ZoneSensorType.PANEL_GLASS_BREAK,
-    ]) {
-      expect(isGenericSensorType(t)).toBe(false);
-    }
-  });
-
-  it('does not claim excluded types (keypad/bluetooth/takeover-module)', () => {
-    expect(isGenericSensorType(ZoneSensorType.KEYPAD)).toBe(false);
-    expect(isGenericSensorType(ZoneSensorType.BLUETOOTH)).toBe(false);
-    expect(isGenericSensorType(ZoneSensorType.TAKEOVER_MODULE)).toBe(false);
-  });
-
-  it('claims completely unknown types (forward-compatibility for new sensors)', () => {
-    expect(isGenericSensorType('SomeNewSensorTypeQolsysAddedNextYear')).toBe(true);
-  });
-});
-
-describe('partition invariant: no type claimed by two drivers', () => {
-  // The pair flow assumes each zone shows up under exactly one driver.
-  // A type claimed by two drivers would surface as duplicate entries
-  // during pairing.
+describe('partition invariants', () => {
   const allSpecificTypes = [
     ...ContactSensorTypes,
     ...MotionSensorTypes,
@@ -121,7 +75,7 @@ describe('partition invariant: no type claimed by two drivers', () => {
     ...GlassBreakDetectorTypes,
   ];
 
-  it('specific drivers do not overlap with each other', () => {
+  it('specific drivers do not overlap with each other (no duplicate pairing entries)', () => {
     const seen = new Set<string>();
     const dupes: string[] = [];
     for (const t of allSpecificTypes) {
@@ -131,9 +85,27 @@ describe('partition invariant: no type claimed by two drivers', () => {
     expect(dupes).toEqual([]);
   });
 
-  it('no specific-driver type also leaks into the generic catch-all', () => {
-    for (const t of allSpecificTypes) {
-      expect(isGenericSensorType(t)).toBe(false);
+  it('every ZoneSensorType is claimed, excluded, or explicitly unsupported', () => {
+    // Exhaustiveness: walking the entire ZoneSensorType enum, every
+    // value must end up in one of three buckets. This catches a new
+    // value being added to the enum without a deliberate decision.
+    const claimed = new Set(allSpecificTypes);
+    const unsupported = new Set(UnsupportedZoneTypes);
+
+    const uncategorised: string[] = [];
+    for (const t of Object.values(ZoneSensorType)) {
+      const isExcluded = !shouldIncludeZone(t);
+      if (isExcluded) continue;
+      if (claimed.has(t)) continue;
+      if (unsupported.has(t)) continue;
+      uncategorised.push(t);
     }
+    expect(uncategorised).toEqual([]);
+  });
+
+  it('UnsupportedZoneTypes does not overlap with any specific-driver list', () => {
+    const claimed = new Set(allSpecificTypes);
+    const overlap = UnsupportedZoneTypes.filter((t) => claimed.has(t));
+    expect(overlap).toEqual([]);
   });
 });

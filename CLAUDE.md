@@ -50,7 +50,7 @@ drivers/
   smoke-detector/                   — SmokeDetector, Smoke_M → alarm_smoke
   co-detector/                      — CODetector → alarm_co
   water-sensor/                     — Water → alarm_water
-  generic-sensor/                   — catch-all for everything else (glass break, freeze, shock, etc.) → alarm_generic
+  glass-break-detector/             — GlassBreak, Panel Glass Break → alarm_generic
     driver.ts                       — extends ZoneDriver, returns the sensor types it claims
     device.ts                       — re-exports ZoneDevice (no per-type subclass needed)
     driver.compose.json             — declares this driver's capabilities + name + images
@@ -144,7 +144,9 @@ The 6 per-type drivers each handle a specific subset of Qolsys sensor types. The
 | `smoke-detector` | `SmokeDetector`, `Smoke_M` | `alarm_smoke` |
 | `co-detector` | `CODetector` | `alarm_co` |
 | `water-sensor` | `Water` | `alarm_water` |
-| `generic-sensor` | everything else (glass break, freeze, shock, doorbell, key fob, siren, temperature, etc.) | `alarm_generic` |
+| `glass-break-detector` | `GlassBreak`, `Panel Glass Break` | `alarm_generic` |
+
+**Currently unsupported sensor types** (no driver yet, deliberately listed in `UnsupportedZoneTypes` in `lib/ZoneTypes.ts`): freeze, heat, high temperature, shock, doorbell, auxiliary pendant, key fob, siren, tamper, temperature, translator, unknown. The exhaustiveness test in `test/zone-driver-filter.test.ts` will fail if a new `ZoneSensorType` enum value is added without categorisation, forcing a deliberate decision (claim it with a new driver, exclude it, or document it as unsupported) — no silent fall-through.
 
 All zones also get `alarm_tamper` + `alarm_battery`. PowerG zones additionally get `measure_temperature` + `measure_luminance` added at pair time. Keypad / Bluetooth / TakeoverModule types are filtered out entirely.
 
@@ -176,7 +178,7 @@ Active statuses: `Open`, `Active`, `Activated`, `Alarmed`, `Occupied`
 ### Flow Cards
 **Alarm Panel triggers:** `alarm_triggered` (tokens: partition_name, alarm_type)
 **Alarm Panel actions:** `arm_away`, `arm_home`, `disarm`
-**Zone driver triggers (one per driver, all globally unique):** `contact-sensor_tampered`, `motion-sensor_tampered`, `smoke-detector_tampered`, `co-detector_tampered`, `water-sensor_tampered`, `generic-sensor_tampered`
+**Zone driver triggers (one per driver, all globally unique):** `contact-sensor_tampered`, `motion-sensor_tampered`, `smoke-detector_tampered`, `co-detector_tampered`, `water-sensor_tampered`, `glass-break-detector_tampered`
 
 Standard Homey contact/motion triggers work automatically via capabilities.
 

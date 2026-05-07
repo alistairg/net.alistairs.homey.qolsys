@@ -126,21 +126,25 @@ export const GlassBreakDetectorTypes: readonly string[] = [
   ZoneSensorType.PANEL_GLASS_BREAK,
 ];
 
-const SpecificDriverTypeSet: Set<string> = new Set([
-  ...ContactSensorTypes,
-  ...MotionSensorTypes,
-  ...SmokeDetectorTypes,
-  ...CODetectorTypes,
-  ...WaterSensorTypes,
-  ...GlassBreakDetectorTypes,
-]);
-
 /**
- * Returns true if this sensor type should be claimed by the
- * generic-sensor driver: it's includable (not keypad/bluetooth/takeover)
- * and no specific driver claims it.
+ * Sensor types Qolsys panels report but which don't yet have a Homey
+ * driver. When new specific drivers are added (e.g. heat-detector,
+ * freeze-sensor, doorbell), move the type out of this list and into the
+ * new driver's per-type list. Listed explicitly so the test suite
+ * forces a deliberate categorisation when a new ZoneSensorType is added
+ * to the enum — no silent fall-through to a catch-all driver.
  */
-export function isGenericSensorType(sensorType: string): boolean {
-  if (!shouldIncludeZone(sensorType)) return false;
-  return !SpecificDriverTypeSet.has(sensorType);
-}
+export const UnsupportedZoneTypes: readonly string[] = [
+  ZoneSensorType.AUXILIARY_PENDANT,
+  ZoneSensorType.DOORBELL,
+  ZoneSensorType.FREEZE,
+  ZoneSensorType.HEAT,
+  ZoneSensorType.HIGH_TEMPERATURE,
+  ZoneSensorType.KEY_FOB,
+  ZoneSensorType.SHOCK,
+  ZoneSensorType.SIREN,
+  ZoneSensorType.TAMPER,
+  ZoneSensorType.TEMPERATURE,
+  ZoneSensorType.TRANSLATOR,
+  ZoneSensorType.UNKNOWN,
+];
