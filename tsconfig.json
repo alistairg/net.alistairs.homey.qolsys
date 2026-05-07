@@ -9,6 +9,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["app.ts", "lib/**/*.ts", "drivers/**/*.ts", "test/**/*.ts"],
-  "exclude": [".homeybuild/**", "node_modules/**", "QolsysController/**", "ha-qolsys-panel/**"]
+  "include": ["app.ts", "lib/**/*.ts", "drivers/**/*.ts"],
+  "exclude": [".homeybuild/**", "node_modules/**", "QolsysController/**", "ha-qolsys-panel/**", "test/**"]
 }
