@@ -17,6 +17,11 @@
   "connectivity": [
     "lan"
   ],
+  "images": {
+    "small":  "/drivers/smoke-detector/assets/images/image_s.jpg",
+    "large":  "/drivers/smoke-detector/assets/images/image_l.jpg",
+    "xlarge": "/drivers/smoke-detector/assets/images/image_xl.jpg"
+  },
   "pair": [
     {
       "id": "list_devices",
