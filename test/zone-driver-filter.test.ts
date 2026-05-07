@@ -65,34 +65,13 @@ describe('per-driver sensor type filters', () => {
   });
 });
 
-describe('PowerG extras scope', () => {
-  // Only motion-class PowerG sensors (PG9914/9924/9984/9994 etc.) carry
-  // ambient light and temperature sensors. Other PowerG hardware
-  // (glass-break, contact, smoke, CO, water) doesn't have those sensors,
-  // so adding `measure_temperature` / `measure_luminance` to a non-motion
-  // PowerG device would surface a permanent "Temperature: 0°C" /
-  // "Light: 0 lux" with no real updates ever arriving. ZoneDriver scopes
-  // the extras to motion-class types only — these tests pin that down.
-
-  it('motion-class types are eligible for PowerG temperature + luminance', () => {
-    for (const t of MotionSensorTypes) {
-      expect(MotionSensorTypes.includes(t)).toBe(true);
-    }
-  });
-
-  it('non-motion zone-driver types are NOT eligible for PowerG extras', () => {
-    const ineligible = [
-      ...ContactSensorTypes,
-      ...SmokeDetectorTypes,
-      ...CODetectorTypes,
-      ...WaterSensorTypes,
-      ...GlassBreakDetectorTypes,
-    ];
-    for (const t of ineligible) {
-      expect(MotionSensorTypes.includes(t)).toBe(false);
-    }
-  });
-});
+// Note: there's no longer a "PowerG extras scope" test block — PowerG
+// temperature/luminance capabilities aren't added at pair time at all.
+// The values appear to be encoded in the panel's hex-keyed `status_data`
+// blob rather than as discrete `temperature` / `light` content-value
+// fields, so without decoding that we'd surface permanent 0 readings.
+// If/when we figure out the encoding, re-add a focused test here that
+// asserts which sensor types should opt in.
 
 describe('partition invariants', () => {
   const allSpecificTypes = [
