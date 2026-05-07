@@ -118,9 +118,14 @@ export default class AlarmPanelDriver extends Homey.Driver {
         safeEmit('pairing_status', 'Panel disconnected, waiting for reconnect...');
       });
 
-      // Run the long-poll in the background and signal completion via events
+      // Run the long-poll in the background and signal completion via events.
+      // Both branches gate on `localPairingServer === pairingServer` so that
+      // if the user navigates Previous→Continue and we explicitly replace
+      // this PairingServer with a fresh one, the old instance's outcome is
+      // ignored rather than surfacing a spurious cancel error to the UI.
       localPairingServer.startPairing(300000) // 5 min timeout
         .then((result) => {
+          if (localPairingServer !== pairingServer) return;
           panelIp = panelIp || result.panelIp;
           safeEmit('pairing_status', 'Certificate exchange complete!');
           if (panelIp) {
@@ -129,6 +134,11 @@ export default class AlarmPanelDriver extends Homey.Driver {
           safeEmit('pairing_done', null);
         })
         .catch((err: Error) => {
+          if (localPairingServer !== pairingServer) {
+            // Superseded by a newer pairing attempt — silent.
+            this.log('Previous PairingServer ended (superseded):', err.message);
+            return;
+          }
           this.log('Pairing failed:', err.message);
           localPairingServer.stopPairing().catch(() => undefined);
           safeEmit('pairing_error', err.message || 'Pairing failed');
