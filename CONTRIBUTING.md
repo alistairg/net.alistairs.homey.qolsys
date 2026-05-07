@@ -47,3 +47,12 @@ If you've found a security vulnerability, please **don't** file it as a public i
 ## Licence
 
 By contributing you agree that your contributions are licensed under the same [GPL-3.0 licence](LICENSE) as the rest of the project.
+
+## References & acknowledgements
+
+The Qolsys IQ Remote protocol was reverse-engineered by **[Eric Hylands](https://github.com/EHylands)** and published as two reference implementations under the MIT licence:
+
+- [QolsysController](https://github.com/EHylands/QolsysController) — Python library
+- [ha-qolsys-panel](https://github.com/EHylands/ha-qolsys-panel) — Home Assistant integration
+
+This Homey app is a Node.js port of the same protocol. When in doubt about panel behaviour, consult Eric's repos as the source of truth — and please credit accordingly in any further derivative work.
