@@ -35,6 +35,10 @@ export default class AlarmPanelDriver extends Homey.Driver {
   }
 
   async onPair(session: Homey.Driver.PairSession): Promise<void> {
+    // Panel IP is learned automatically from the TLS handshake during
+    // pairing (PairingServer reads socket.remoteAddress). No need to ask
+    // the user up-front. Falls back to settings on a re-pair where PKI
+    // already exists.
     let panelIp = '';
     let pairingServer: PairingServer | null = null;
 
@@ -50,17 +54,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
       }
     });
 
-    // Step 1: User enters panel IP
-    session.setHandler('configure', async (data: { panelIp: string }) => {
-      panelIp = data.panelIp;
-      this.log('Configure: panelIp =', panelIp);
-
-      if (panelIp) {
-        this.homey.settings.set('panel_ip', panelIp);
-      }
-    });
-
-    // Step 2: Start pairing (certificate exchange)
+    // Start pairing (certificate exchange)
     session.setHandler('start_pairing', async () => {
       this.log('start_pairing handler invoked, isPaired:', pkiManager.isPaired());
 
@@ -119,7 +113,7 @@ export default class AlarmPanelDriver extends Homey.Driver {
       }
     });
 
-    // Step 3: List partition devices
+    // List partition devices (after panel connect + initial database sync)
     session.setHandler('list_devices', async () => {
       // Use stored panel IP if not set in this session
       if (!panelIp) {
