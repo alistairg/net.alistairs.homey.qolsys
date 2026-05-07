@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Qolsys IQ Panel — Settings</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      color: #333;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h2 { margin-top: 0; }
+    h3 { margin-bottom: 8px; }
+    .section {
+      background: #f7f7f7;
+      border-radius: 6px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .blurb {
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0 0 14px 0;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #f0ad4e;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    button {
+      padding: 10px 16px;
+      background: #1a1a2e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover { background: #2a2a4e; }
+    button.danger { background: #c0392b; }
+    button.danger:hover { background: #a52a1f; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    input[type="file"] { display: block; margin: 10px 0; font-size: 14px; }
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      min-height: 18px;
+    }
+    .status.ok { color: #2c7a2c; }
+    .status.err { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <h2>Qolsys IQ Panel — Backup &amp; Restore</h2>
+
+  <div class="section">
+    <h3>Export pairing data</h3>
+    <p class="blurb">
+      Pairing with the panel is a one-time exchange that consumes one of the panel's IQ Remote slots
+      (3 on IQ Panel 2/2+, 8 on IQ Panel 4 / IQ Pro). Freeing a slot generally requires alarm-company
+      intervention. Export now, store the file somewhere safe (1Password / encrypted note / similar),
+      and you can restore the pairing instantly if Homey is wiped or the app is reinstalled.
+    </p>
+    <div class="warning">
+      <strong>The export contains the RSA private key</strong> that authenticates Homey to your panel
+      as a trusted IQ Remote. Treat the file like a credential: don't email it, don't paste it in chat,
+      don't commit it to git.
+    </div>
+    <button id="export-btn" type="button">Download backup</button>
+    <p class="status" id="export-status"></p>
+  </div>
+
+  <div class="section">
+    <h3>Restore pairing data</h3>
+    <p class="blurb">
+      Upload a backup file previously exported from this app. The file replaces the current PKI material
+      and panel IP in app settings, and reconnects to the panel using the restored credentials.
+    </p>
+    <input type="file" id="restore-file" accept=".json,application/json" />
+    <button id="restore-btn" type="button" class="danger" disabled>Restore from backup</button>
+    <p class="status" id="restore-status"></p>
+  </div>
+
+  <script type="text/javascript">
+    function onHomeyReady(Homey) {
+      var exportBtn = document.getElementById('export-btn');
+      var exportStatus = document.getElementById('export-status');
+      var restoreFile = document.getElementById('restore-file');
+      var restoreBtn = document.getElementById('restore-btn');
+      var restoreStatus = document.getElementById('restore-status');
+
+      function setStatus(el, msg, kind) {
+        el.textContent = msg;
+        el.className = 'status' + (kind ? ' ' + kind : '');
+      }
+
+      exportBtn.addEventListener('click', function () {
+        setStatus(exportStatus, 'Fetching backup...');
+        Homey.api('GET', '/backup', function (err, json) {
+          if (err) {
+            setStatus(exportStatus, err.message || 'Export failed.', 'err');
+            return;
+          }
+          // The endpoint returns the JSON-as-a-string.
+          var payload = typeof json === 'string' ? json : JSON.stringify(json, null, 2);
+          var blob = new Blob([payload], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          var ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+          a.href = url;
+          a.download = 'qolsys-pairing-backup-' + ts + '.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          setStatus(exportStatus, 'Downloaded. Store this file somewhere safe.', 'ok');
+        });
+      });
+
+      restoreFile.addEventListener('change', function () {
+        restoreBtn.disabled = !restoreFile.files || restoreFile.files.length === 0;
+        setStatus(restoreStatus, '');
+      });
+
+      restoreBtn.addEventListener('click', function () {
+        if (!restoreFile.files || restoreFile.files.length === 0) return;
+        var file = restoreFile.files[0];
+
+        Homey.confirm(
+          'Restore from "' + file.name + '"? This will overwrite the current pairing data.',
+          null,
+          function (confirmErr, confirmed) {
+            if (confirmErr || !confirmed) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+              var content = e.target.result;
+              try {
+                JSON.parse(content); // validate before sending
+              } catch (parseErr) {
+                setStatus(restoreStatus, 'File is not valid JSON.', 'err');
+                return;
+              }
+              setStatus(restoreStatus, 'Restoring...');
+              Homey.api('POST', '/restore', { json: content }, function (apiErr, result) {
+                if (apiErr) {
+                  setStatus(restoreStatus, apiErr.message || 'Restore failed.', 'err');
+                  return;
+                }
+                var ip = result && result.panelIp ? result.panelIp : 'unknown';
+                setStatus(restoreStatus, 'Restored. Panel IP: ' + ip + '. The app will reconnect.', 'ok');
+              });
+            };
+            reader.onerror = function () {
+              setStatus(restoreStatus, 'Could not read file.', 'err');
+            };
+            reader.readAsText(file);
+          }
+        );
+      });
+
+      Homey.ready();
+    }
+  </script>
+</body>
+</html>
