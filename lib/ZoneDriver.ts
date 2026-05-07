@@ -97,4 +97,3 @@ export abstract class ZoneDriver extends Homey.Driver {
 
 }
 
-module.exports = ZoneDriver;

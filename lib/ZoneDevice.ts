@@ -161,4 +161,3 @@ export default class ZoneDevice extends Homey.Device {
 
 }
 
-module.exports = ZoneDevice;
