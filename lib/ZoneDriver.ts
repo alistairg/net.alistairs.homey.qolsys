@@ -1,5 +1,10 @@
 import Homey from 'homey';
-import { getCapabilitiesForZone, getDeviceClassForZone, shouldIncludeZone } from './ZoneTypes';
+import {
+  getCapabilitiesForZone,
+  getDeviceClassForZone,
+  shouldIncludeZone,
+  MotionSensorTypes,
+} from './ZoneTypes';
 import { getBatteryType } from './BatteryTypes';
 
 import type QolsysApp from '../app';
@@ -67,12 +72,16 @@ export abstract class ZoneDriver extends Homey.Driver {
         // sensor type it specifically handles.
         if (!this.claimsZoneType(zone.sensorType)) continue;
 
-        // We can't tell from the static database whether a PowerG zone
-        // reports temperature or light specifically, so we add both
-        // capabilities optimistically; the device only writes values
-        // when the panel actually sends them.
+        // PowerG hardware varies by category. Only motion-class PowerG
+        // sensors (PG9914/9924/9984/9994 etc.) carry ambient light and
+        // temperature sensors. PowerG glass-break, contacts, smoke,
+        // CO and water hardware does not — adding the capabilities to
+        // those would surface a permanent "Temperature: 0°C" /
+        // "Light: 0 lux" because no PowerG event ever updates them.
         const isPowerG = zone.currentCapability === 'POWERG';
-        const capabilities = getCapabilitiesForZone(zone.sensorType, isPowerG, isPowerG);
+        const isMotionClass = MotionSensorTypes.includes(zone.sensorType);
+        const hasPowergExtras = isPowerG && isMotionClass;
+        const capabilities = getCapabilitiesForZone(zone.sensorType, hasPowergExtras, hasPowergExtras);
         const deviceClass = getDeviceClassForZone(zone.sensorType);
 
         devices.push({
