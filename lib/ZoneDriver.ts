@@ -1,5 +1,9 @@
 import Homey from 'homey';
-import { getCapabilitiesForZone, getDeviceClassForZone, shouldIncludeZone } from './ZoneTypes';
+import {
+  getCapabilitiesForZone,
+  getDeviceClassForZone,
+  shouldIncludeZone,
+} from './ZoneTypes';
 import { getBatteryType } from './BatteryTypes';
 
 import type QolsysApp from '../app';
@@ -67,12 +71,16 @@ export abstract class ZoneDriver extends Homey.Driver {
         // sensor type it specifically handles.
         if (!this.claimsZoneType(zone.sensorType)) continue;
 
-        // We can't tell from the static database whether a PowerG zone
-        // reports temperature or light specifically, so we add both
-        // capabilities optimistically; the device only writes values
-        // when the panel actually sends them.
-        const isPowerG = zone.currentCapability === 'POWERG';
-        const capabilities = getCapabilitiesForZone(zone.sensorType, isPowerG, isPowerG);
+        // PowerG temperature/luminance is wired up at the parser level
+        // (DatabaseParser handles `temperature` / `light` fields on
+        // PowerGDeviceContentProvider events) but in practice no zones
+        // — including PowerG motion sensors with ambient light + temp
+        // hardware — emit those values via the panel's MQTT stream.
+        // The values may be encoded in the per-event `status_data`
+        // hex-keyed blob; decoding that is out of scope for now. Until
+        // we figure it out, don't add capabilities that will sit at 0
+        // forever.
+        const capabilities = getCapabilitiesForZone(zone.sensorType, false, false);
         const deviceClass = getDeviceClassForZone(zone.sensorType);
 
         devices.push({

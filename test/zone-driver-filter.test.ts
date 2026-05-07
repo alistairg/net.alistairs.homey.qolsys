@@ -65,6 +65,14 @@ describe('per-driver sensor type filters', () => {
   });
 });
 
+// Note: there's no longer a "PowerG extras scope" test block — PowerG
+// temperature/luminance capabilities aren't added at pair time at all.
+// The values appear to be encoded in the panel's hex-keyed `status_data`
+// blob rather than as discrete `temperature` / `light` content-value
+// fields, so without decoding that we'd surface permanent 0 readings.
+// If/when we figure out the encoding, re-add a focused test here that
+// asserts which sensor types should opt in.
+
 describe('partition invariants', () => {
   const allSpecificTypes = [
     ...ContactSensorTypes,
