@@ -50,8 +50,12 @@ export class PairingServer extends EventEmitter {
    * @param timeoutMs How long to wait for the panel to connect (default: 5 minutes)
    */
   async startPairing(timeoutMs: number = 300000): Promise<PairingResult> {
-    // Pick random port 50000–55000
-    this.port = 50000 + Math.floor(Math.random() * 5001);
+    // Fixed port. Earlier versions picked a random port in 50000–55000 each
+    // session, which made stale mDNS cache entries on the panel point at
+    // dead ports across restarts. A fixed port means a stale SRV record
+    // resolves to the same port we're listening on now, so the panel
+    // never gets a connection-refused even if its mDNS cache lags.
+    this.port = 51234;
 
     // Load PKI for TLS server context
     const pki = this.pkiManager.loadPki();
@@ -101,10 +105,14 @@ export class PairingServer extends EventEmitter {
         const serviceType = '_http._tcp.local';
         const hostName = 'NsdPairService.local';
 
+        // SRV + A TTLs deliberately kept short so stale cache entries on
+        // the panel expire quickly rather than tripping a connection
+        // attempt against a dead instance. PTR/TXT can stay long since
+        // they don't carry per-instance state.
         const ptrRecord = { name: serviceType, type: 'PTR' as const, ttl: 4500, data: serviceName };
-        const srvRecord = { name: serviceName, type: 'SRV' as const, ttl: 120, data: { port: this.port, target: hostName, weight: 0, priority: 0 } };
+        const srvRecord = { name: serviceName, type: 'SRV' as const, ttl: 30, data: { port: this.port, target: hostName, weight: 0, priority: 0 } };
         const txtRecord = { name: serviceName, type: 'TXT' as const, ttl: 4500, data: Buffer.alloc(0) };
-        const aRecord = { name: hostName, type: 'A' as const, ttl: 120, data: this.pluginIp };
+        const aRecord = { name: hostName, type: 'A' as const, ttl: 30, data: this.pluginIp };
         // DNS-SD meta-query: advertise that _http._tcp exists as a service type
         const metaPtrRecord = { name: '_services._dns-sd._udp.local', type: 'PTR' as const, ttl: 4500, data: serviceType };
 
