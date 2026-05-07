@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Qolsys IQ Panel — Settings</title>
+  <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      color: #333;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h2 { margin-top: 0; }
+    h3 { margin-bottom: 8px; }
+    .section {
+      background: #f7f7f7;
+      border-radius: 6px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .blurb {
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0 0 14px 0;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #f0ad4e;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    button {
+      padding: 10px 16px;
+      background: #1a1a2e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button:hover { background: #2a2a4e; }
+    button.danger { background: #c0392b; }
+    button.danger:hover { background: #a52a1f; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      resize: vertical;
+      margin: 10px 0;
+      background: #fff;
+    }
+    textarea[readonly] { background: #f0f0f0; }
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      min-height: 18px;
+    }
+    .status.ok { color: #2c7a2c; }
+    .status.err { color: #c0392b; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h2>Qolsys IQ Panel — Backup &amp; Restore</h2>
+
+  <div class="section">
+    <h3>Export pairing data</h3>
+    <p class="blurb">
+      Pairing with the panel consumes one of the panel's IQ Remote slots
+      (3 on IQ Panel 2/2+, 8 on IQ Panel 4 / IQ Pro). Freeing a slot generally requires
+      alarm-company intervention. Export now, store the result somewhere safe (e.g.
+      1Password / encrypted note), and you can restore the pairing instantly if Homey
+      is wiped or the app is reinstalled.
+    </p>
+    <div class="warning">
+      <strong>The export contains the RSA private key</strong> that authenticates Homey to your
+      panel as a trusted IQ Remote. Treat it like a credential.
+    </div>
+    <button id="export-btn" type="button">Generate backup</button>
+    <div id="export-result" class="hidden">
+      <textarea id="export-text" readonly spellcheck="false"></textarea>
+      <button id="copy-btn" type="button">Copy to clipboard</button>
+    </div>
+    <p class="status" id="export-status"></p>
+  </div>
+
+  <div class="section">
+    <h3>Restore pairing data</h3>
+    <p class="blurb">
+      Paste the contents of a previous backup below. The data replaces the current PKI
+      material and panel IP, and the app reconnects to the panel using the restored credentials.
+    </p>
+    <textarea id="restore-text" placeholder="Paste backup JSON here..." spellcheck="false"></textarea>
+    <button id="restore-btn" type="button" class="danger">Restore from backup</button>
+    <p class="status" id="restore-status"></p>
+  </div>
+
+  <script type="text/javascript">
+    function onHomeyReady(Homey) {
+      var exportBtn = document.getElementById('export-btn');
+      var exportResult = document.getElementById('export-result');
+      var exportText = document.getElementById('export-text');
+      var copyBtn = document.getElementById('copy-btn');
+      var exportStatus = document.getElementById('export-status');
+      var restoreText = document.getElementById('restore-text');
+      var restoreBtn = document.getElementById('restore-btn');
+      var restoreStatus = document.getElementById('restore-status');
+
+      function setStatus(el, msg, kind) {
+        el.textContent = msg;
+        el.className = 'status' + (kind ? ' ' + kind : '');
+      }
+
+      exportBtn.addEventListener('click', function () {
+        setStatus(exportStatus, 'Fetching backup...');
+        Homey.api('GET', '/backup', function (err, json) {
+          if (err) {
+            setStatus(exportStatus, (err && err.message) || 'Export failed.', 'err');
+            return;
+          }
+          var payload = typeof json === 'string' ? json : JSON.stringify(json, null, 2);
+          exportText.value = payload;
+          exportResult.classList.remove('hidden');
+          exportText.focus();
+          exportText.select();
+          setStatus(
+            exportStatus,
+            'Backup ready. Copy and save to a .json file somewhere safe.',
+            'ok'
+          );
+        });
+      });
+
+      copyBtn.addEventListener('click', function () {
+        exportText.focus();
+        exportText.select();
+        var ok = false;
+        try {
+          ok = document.execCommand('copy');
+        } catch (e) { ok = false; }
+        if (ok) {
+          setStatus(exportStatus, 'Copied to clipboard. Now paste into a text editor and save.', 'ok');
+        } else {
+          setStatus(exportStatus, 'Could not copy automatically — please select all and copy manually.', 'err');
+        }
+      });
+
+      restoreBtn.addEventListener('click', function () {
+        var content = restoreText.value.trim();
+        if (!content) {
+          setStatus(restoreStatus, 'Paste the backup JSON first.', 'err');
+          return;
+        }
+        try {
+          JSON.parse(content);
+        } catch (parseErr) {
+          setStatus(restoreStatus, 'That is not valid JSON.', 'err');
+          return;
+        }
+
+        Homey.confirm(
+          'Restore pairing data? This overwrites the current PKI in app settings.',
+          null,
+          function (confirmErr, confirmed) {
+            if (confirmErr || !confirmed) return;
+            setStatus(restoreStatus, 'Restoring...');
+            Homey.api('POST', '/restore', { json: content }, function (apiErr, result) {
+              if (apiErr) {
+                setStatus(restoreStatus, (apiErr && apiErr.message) || 'Restore failed.', 'err');
+                return;
+              }
+              var ip = result && result.panelIp ? result.panelIp : 'unknown';
+              setStatus(
+                restoreStatus,
+                'Restored. Panel IP: ' + ip + '. The app will reconnect on the next tick.',
+                'ok'
+              );
+            });
+          }
+        );
+      });
+
+      Homey.ready();
+    }
+  </script>
+</body>
+</html>
