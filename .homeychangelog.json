@@ -4,5 +4,8 @@
   },
   "1.0.2": {
     "en": "Adds an Export/Restore feature to app settings: back up your pairing data so you can recover from a Homey wipe or app reinstall without consuming another IQ Remote slot. Pairing flow is also more reliable — fixed an issue where the UI would falsely report a 30-second timeout, and the on-screen instructions are now visible during the pairing window. The panel IP is detected automatically; you no longer have to type it."
+  },
+  "1.1.0": {
+    "en": "Arm modes: arm the panel to Away, Home, or Night from Homey, with a new \"Arm mode changed\" Flow trigger and \"Arm mode is\" condition so Flows can react to the exact mode. The panel now also shows dedicated Arming, Entry delay, Alarm sounding, and Ready to arm states. Glass-break sensors now report as \"Glass break\" (with Insights) instead of a generic alarm. Fixed: the arm state no longer flickers (e.g. briefly showing disarmed) while arming — it changes in one clean step, and arm-mode Flows now trigger reliably when you arm from the Homey app."
   }
 }

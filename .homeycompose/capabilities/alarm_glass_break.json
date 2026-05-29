@@ -1,0 +1,15 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Glass break"
+  },
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Glass break detected"
+  },
+  "insightsTitleFalse": {
+    "en": "Glass break cleared"
+  }
+}

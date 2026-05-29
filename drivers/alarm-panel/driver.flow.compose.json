@@ -27,6 +27,56 @@
           }
         }
       ]
+    },
+    {
+      "id": "arm_mode_changed",
+      "title": {
+        "en": "Arm mode changed"
+      },
+      "titleFormatted": {
+        "en": "Arm mode changed to [[mode]]"
+      },
+      "args": [
+        {
+          "name": "mode",
+          "type": "dropdown",
+          "title": {
+            "en": "Mode"
+          },
+          "values": [
+            { "id": "disarmed", "label": { "en": "Disarmed" } },
+            { "id": "arm_away", "label": { "en": "Armed away" } },
+            { "id": "arm_stay", "label": { "en": "Armed home" } },
+            { "id": "arm_night", "label": { "en": "Armed night" } }
+          ]
+        }
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "arm_mode_is",
+      "title": {
+        "en": "Arm mode !{{is|is not}}"
+      },
+      "titleFormatted": {
+        "en": "Arm mode !{{is|is not}} [[mode]]"
+      },
+      "args": [
+        {
+          "name": "mode",
+          "type": "dropdown",
+          "title": {
+            "en": "Mode"
+          },
+          "values": [
+            { "id": "disarmed", "label": { "en": "Disarmed" } },
+            { "id": "arm_away", "label": { "en": "Armed away" } },
+            { "id": "arm_stay", "label": { "en": "Armed home" } },
+            { "id": "arm_night", "label": { "en": "Armed night" } }
+          ]
+        }
+      ]
     }
   ],
   "actions": [

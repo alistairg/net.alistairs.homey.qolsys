@@ -1,0 +1,15 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Alarm sounding"
+  },
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Alarm started sounding"
+  },
+  "insightsTitleFalse": {
+    "en": "Alarm stopped sounding"
+  }
+}
