@@ -37,8 +37,12 @@ describe('getCapabilitiesForZone', () => {
     expect(getCapabilitiesForZone('CompletelyUnknownType')).toContain('alarm_generic');
   });
 
-  it('falls back to alarm_generic for niche but mapped types like glass break and shock', () => {
-    expect(getCapabilitiesForZone(ZoneSensorType.GLASS_BREAK)).toContain('alarm_generic');
+  it('maps glass break to alarm_glass_break', () => {
+    expect(getCapabilitiesForZone(ZoneSensorType.GLASS_BREAK)).toContain('alarm_glass_break');
+    expect(getCapabilitiesForZone(ZoneSensorType.PANEL_GLASS_BREAK)).toContain('alarm_glass_break');
+  });
+
+  it('falls back to alarm_generic for unsupported types like shock and freeze', () => {
     expect(getCapabilitiesForZone(ZoneSensorType.SHOCK)).toContain('alarm_generic');
     expect(getCapabilitiesForZone(ZoneSensorType.FREEZE)).toContain('alarm_generic');
   });

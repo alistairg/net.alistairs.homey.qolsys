@@ -8,11 +8,22 @@ import type QolsysApp from '../../app';
 export default class AlarmPanelDriver extends Homey.Driver {
 
   private _alarmTriggeredCard!: Homey.FlowCardTriggerDevice;
+  private _armModeChangedCard!: Homey.FlowCardTriggerDevice;
 
   async onInit(): Promise<void> {
     this.log('Alarm Panel driver initialized');
 
     this._alarmTriggeredCard = this.homey.flow.getDeviceTriggerCard('alarm_triggered');
+
+    this._armModeChangedCard = this.homey.flow.getDeviceTriggerCard('arm_mode_changed');
+    this._armModeChangedCard.registerRunListener(async (args, state) => {
+      return args.mode === state.mode;
+    });
+
+    const armModeIsCondition = this.homey.flow.getConditionCard('arm_mode_is');
+    armModeIsCondition.registerRunListener(async (args) => {
+      return args.mode === (args.device as any).getCapabilityValue('arm_mode');
+    });
 
     const armAwayAction = this.homey.flow.getActionCard('arm_away');
     armAwayAction.registerRunListener(async (args) => {
@@ -32,6 +43,10 @@ export default class AlarmPanelDriver extends Homey.Driver {
 
   triggerAlarm(device: Homey.Device, tokens: { partition_name: string; alarm_type: string }): void {
     this._alarmTriggeredCard.trigger(device, tokens).catch(this.error);
+  }
+
+  triggerArmModeChanged(device: Homey.Device, mode: string): void {
+    this._armModeChangedCard.trigger(device, {}, { mode }).catch(this.error);
   }
 
   async onPair(session: Homey.Driver.PairSession): Promise<void> {

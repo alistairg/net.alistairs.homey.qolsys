@@ -4,7 +4,7 @@
   },
   "class": "sensor",
   "capabilities": [
-    "alarm_generic",
+    "alarm_glass_break",
     "alarm_tamper",
     "alarm_battery"
   ],

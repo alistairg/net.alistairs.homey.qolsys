@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "net.alistairs.homey.qolsys",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "platforms": [
@@ -75,6 +75,55 @@
             "type": "device",
             "name": "device",
             "filter": "driver_id=alarm-panel"
+          }
+        ]
+      },
+      {
+        "id": "arm_mode_changed",
+        "title": {
+          "en": "Arm mode changed"
+        },
+        "titleFormatted": {
+          "en": "Arm mode changed to [[mode]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode"
+            },
+            "values": [
+              {
+                "id": "disarmed",
+                "label": {
+                  "en": "Disarmed"
+                }
+              },
+              {
+                "id": "arm_away",
+                "label": {
+                  "en": "Armed away"
+                }
+              },
+              {
+                "id": "arm_stay",
+                "label": {
+                  "en": "Armed home"
+                }
+              },
+              {
+                "id": "arm_night",
+                "label": {
+                  "en": "Armed night"
+                }
+              }
+            ]
           }
         ]
       },
@@ -157,6 +206,57 @@
         ]
       }
     ],
+    "conditions": [
+      {
+        "id": "arm_mode_is",
+        "title": {
+          "en": "Arm mode !{{is|is not}}"
+        },
+        "titleFormatted": {
+          "en": "Arm mode !{{is|is not}} [[mode]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=alarm-panel"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode"
+            },
+            "values": [
+              {
+                "id": "disarmed",
+                "label": {
+                  "en": "Disarmed"
+                }
+              },
+              {
+                "id": "arm_away",
+                "label": {
+                  "en": "Armed away"
+                }
+              },
+              {
+                "id": "arm_stay",
+                "label": {
+                  "en": "Armed home"
+                }
+              },
+              {
+                "id": "arm_night",
+                "label": {
+                  "en": "Armed night"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "actions": [
       {
         "id": "arm_away",
@@ -207,7 +307,7 @@
       "class": "homealarm",
       "capabilities": [
         "homealarm_state",
-        "alarm_generic",
+        "alarm_sounding",
         "alarm_tamper",
         "arm_mode",
         "alarm_arming",
@@ -215,11 +315,6 @@
         "ready_to_arm"
       ],
       "capabilitiesOptions": {
-        "alarm_generic": {
-          "title": {
-            "en": "Alarm sounding"
-          }
-        },
         "alarm_tamper": {
           "title": {
             "en": "Panel tamper"
@@ -417,7 +512,7 @@
       },
       "class": "sensor",
       "capabilities": [
-        "alarm_generic",
+        "alarm_glass_break",
         "alarm_tamper",
         "alarm_battery"
       ],
@@ -702,6 +797,36 @@
       },
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/entry-delay.svg"
+    },
+    "alarm_glass_break": {
+      "type": "boolean",
+      "title": {
+        "en": "Glass break"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Glass break detected"
+      },
+      "insightsTitleFalse": {
+        "en": "Glass break cleared"
+      }
+    },
+    "alarm_sounding": {
+      "type": "boolean",
+      "title": {
+        "en": "Alarm sounding"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Alarm started sounding"
+      },
+      "insightsTitleFalse": {
+        "en": "Alarm stopped sounding"
+      }
     },
     "arm_mode": {
       "type": "enum",

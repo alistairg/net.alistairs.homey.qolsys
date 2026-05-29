@@ -120,9 +120,9 @@ export default class ZoneDevice extends Homey.Device {
 
     // Update whichever primary alarm capability this device was paired
     // with (alarm_contact / alarm_motion / alarm_smoke / alarm_co /
-    // alarm_water / alarm_generic). The compose for each driver declares
-    // exactly one of these; we find it dynamically rather than baking
-    // the type into this class.
+    // alarm_water / alarm_glass_break). The compose for each driver
+    // declares exactly one of these; we find it dynamically rather than
+    // baking the type into this class.
     const primaryCap = this.getCapabilities().find((c) =>
       c.startsWith('alarm_') && c !== 'alarm_tamper' && c !== 'alarm_battery',
     );

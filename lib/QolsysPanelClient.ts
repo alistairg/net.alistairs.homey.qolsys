@@ -65,6 +65,14 @@ export class QolsysPanelClient extends EventEmitter {
 
   constructor(homey: Homey, panelIp: string, pkiManager: PkiManager, pluginIp: string) {
     super();
+    // This client is shared across every device on the panel, and each binds
+    // 3–5 listeners (connected/disconnected/zone_update, plus partition_update
+    // /alarm_event on the partition device). A fully-loaded panel (up to ~128
+    // zones + 4 partitions) legitimately exceeds Node's default cap of 10 per
+    // event, so raise it. Kept finite (not 0/unlimited) so a genuine leak from
+    // re-init churn — bindings added without the matching unbind — still trips
+    // the warning rather than being silently masked.
+    this.setMaxListeners(256);
     this.homey = homey;
     this.panelIp = panelIp;
     this.pkiManager = pkiManager;

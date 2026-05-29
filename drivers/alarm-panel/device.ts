@@ -13,7 +13,7 @@ import type QolsysApp from '../../app';
 import type AlarmPanelDriver from './driver';
 import type { QolsysPanelClient } from '../../lib/QolsysPanelClient';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const DISCONNECT_GRACE_MS = 3000;
 
 export default class AlarmPanelDevice extends Homey.Device {
@@ -22,6 +22,8 @@ export default class AlarmPanelDevice extends Homey.Device {
   private partitionId: string = '';
   private disconnectFlapTimer: NodeJS.Timeout | null = null;
   private lastAlarmState: PartitionAlarmState | null = null;
+  private lastSystemStatus: PartitionSystemStatus | null = null;
+  private lastArmMode: string | null = null;
 
   // Bound listeners for cleanup
   private _onConnected = () => this.handleConnected();
@@ -37,6 +39,15 @@ export default class AlarmPanelDevice extends Homey.Device {
     this.partitionId = this.getData().partitionId;
 
     await this.migrateCapabilities();
+
+    // Seed the panel-confirmed arm mode from the persisted capability value.
+    // The arm_mode_changed trigger compares against THIS, not the live
+    // capability value: when a user arms from the Homey UI, Homey sets the
+    // capability optimistically before the panel confirms, so the capability
+    // already equals the target by the time SYSTEM_STATUS lands — comparing
+    // against it would silently swallow the change. Seeding from the stored
+    // value here keeps the no-op on boot (persisted == panel state).
+    this.lastArmMode = (this.getCapabilityValue('arm_mode') as string | null) ?? null;
 
     // Register capability listener for arm/disarm from Homey UI
     this.registerCapabilityListener('homealarm_state', async (value: string) => {
@@ -101,11 +112,17 @@ export default class AlarmPanelDevice extends Homey.Device {
     const stored = (this.getStoreValue('schema_version') as number | undefined) ?? 0;
     if (stored >= SCHEMA_VERSION) return;
 
-    const requiredCaps = ['alarm_generic', 'alarm_tamper', 'arm_mode', 'alarm_arming', 'alarm_entry_delay', 'ready_to_arm'];
+    const requiredCaps = ['alarm_sounding', 'alarm_tamper', 'arm_mode', 'alarm_arming', 'alarm_entry_delay', 'ready_to_arm'];
     for (const cap of requiredCaps) {
       if (!this.hasCapability(cap)) {
         await this.addCapability(cap).catch((err) => this.log(`Failed to add ${cap}:`, err));
       }
+    }
+    // alarm_generic was renamed to alarm_sounding so the auto-generated
+    // flow cards inherit a sensible title from the custom capability
+    // instead of the system "Generic alarm".
+    if (this.hasCapability('alarm_generic')) {
+      await this.removeCapability('alarm_generic').catch((err) => this.log('Failed to remove alarm_generic:', err));
     }
     await this.setStoreValue('schema_version', SCHEMA_VERSION);
   }
@@ -251,13 +268,33 @@ export default class AlarmPanelDevice extends Homey.Device {
     // Exit delay → arming in progress
     this.setCapabilityValue('alarm_arming', isExitDelay).catch(this.error);
 
-    // Entry delay (alarm state is Delay, but NOT during exit delay — that's arming)
-    const isEntryDelay = partition.alarmState === PartitionAlarmState.DELAY && !isExitDelay;
+    // Entry delay = alarm countdown on an already fully-armed partition (a
+    // door opened while armed). It requires an ARM-* status, NOT ARM-*-EXIT-DELAY
+    // (that's arming) and NOT a stale DISARM that hasn't caught up mid-arm —
+    // either of those would otherwise be misread as an entry delay.
+    const isArmed = [
+      PartitionSystemStatus.ARM_AWAY,
+      PartitionSystemStatus.ARM_STAY,
+      PartitionSystemStatus.ARM_NIGHT,
+    ].includes(partition.systemStatus);
+    const isEntryDelay = partition.alarmState === PartitionAlarmState.DELAY && isArmed;
     this.setCapabilityValue('alarm_entry_delay', isEntryDelay).catch(this.error);
 
     // Alarm sounding
     const isAlarming = partition.alarmState === PartitionAlarmState.ALARM;
-    this.setCapabilityValue('alarm_generic', isAlarming).catch(this.error);
+    this.setCapabilityValue('alarm_sounding', isAlarming).catch(this.error);
+
+    // homealarm_state + arm_mode derive SOLELY from SYSTEM_STATUS, so only
+    // recompute them when SYSTEM_STATUS actually changed. The panel emits
+    // separate dbChanged events for ALARM_STATE / EXIT_SOUNDS / ENTRY_DELAYS,
+    // and each fires a partition_update — but those arrive while the panel
+    // still reports the *previous* SYSTEM_STATUS. Re-deriving the arm state
+    // from that stale value flaps the tile mid-arm (e.g. night → disarmed →
+    // night) before the real SYSTEM_STATUS update lands. An UNKNOWN status
+    // (unparseable value) is held rather than dropped to disarmed.
+    if (partition.systemStatus === PartitionSystemStatus.UNKNOWN) return;
+    if (partition.systemStatus === this.lastSystemStatus) return;
+    this.lastSystemStatus = partition.systemStatus;
 
     // Map partition system status to Homey alarm state + arm mode
     let homealarmState: string;
@@ -293,7 +330,15 @@ export default class AlarmPanelDevice extends Homey.Device {
       this.log(`Alarm state: ${current} → ${homealarmState} (panel: ${partition.systemStatus})`);
     }
     this.setCapabilityValue('homealarm_state', homealarmState).catch(this.error);
+
+    // Fire on the panel-confirmed transition, tracked independently of the
+    // (optimistically-set) capability value — see lastArmMode seeding in onInit.
+    const previousArmMode = this.lastArmMode;
+    this.lastArmMode = armMode;
     this.setCapabilityValue('arm_mode', armMode).catch(this.error);
+    if (previousArmMode !== armMode) {
+      (this.driver as AlarmPanelDriver).triggerArmModeChanged(this, armMode);
+    }
   }
 
   /** Check if all zones in this partition are secure (closed/idle/normal). */

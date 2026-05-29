@@ -50,7 +50,7 @@ drivers/
   smoke-detector/                   — SmokeDetector, Smoke_M → alarm_smoke
   co-detector/                      — CODetector → alarm_co
   water-sensor/                     — Water → alarm_water
-  glass-break-detector/             — GlassBreak, Panel Glass Break → alarm_generic
+  glass-break-detector/             — GlassBreak, Panel Glass Break → alarm_glass_break
     driver.ts                       — extends ZoneDriver, returns the sensor types it claims
     device.ts                       — re-exports ZoneDevice (no per-type subclass needed)
     driver.compose.json             — declares this driver's capabilities + name + images
@@ -144,7 +144,7 @@ The 6 per-type drivers each handle a specific subset of Qolsys sensor types. The
 | `smoke-detector` | `SmokeDetector`, `Smoke_M` | `alarm_smoke` |
 | `co-detector` | `CODetector` | `alarm_co` |
 | `water-sensor` | `Water` | `alarm_water` |
-| `glass-break-detector` | `GlassBreak`, `Panel Glass Break` | `alarm_generic` |
+| `glass-break-detector` | `GlassBreak`, `Panel Glass Break` | `alarm_glass_break` |
 
 **Currently unsupported sensor types** (no driver yet, deliberately listed in `UnsupportedZoneTypes` in `lib/ZoneTypes.ts`): freeze, heat, high temperature, shock, doorbell, auxiliary pendant, key fob, siren, tamper, temperature, translator, unknown. The exhaustiveness test in `test/zone-driver-filter.test.ts` will fail if a new `ZoneSensorType` enum value is added without categorisation, forcing a deliberate decision (claim it with a new driver, exclude it, or document it as unsupported) — no silent fall-through.
 

@@ -5,7 +5,7 @@
   "class": "homealarm",
   "capabilities": [
     "homealarm_state",
-    "alarm_generic",
+    "alarm_sounding",
     "alarm_tamper",
     "arm_mode",
     "alarm_arming",
@@ -13,11 +13,6 @@
     "ready_to_arm"
   ],
   "capabilitiesOptions": {
-    "alarm_generic": {
-      "title": {
-        "en": "Alarm sounding"
-      }
-    },
     "alarm_tamper": {
       "title": {
         "en": "Panel tamper"
